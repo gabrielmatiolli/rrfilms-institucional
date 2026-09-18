@@ -1,26 +1,562 @@
 @import "tailwindcss";
 
+/* =========================================================================
+   RR Film - Design tokens
+   Espelham as variaveis do arquivo Figma "RR Films".
+   ========================================================================= */
+
+@theme {
+  /* Texto */
+  --color-texto-forte: #24282a;
+  --color-texto-corpo: #2d3133;
+  --color-texto-suave: #505456;
+  --color-texto-inverso: #ffffff;
+  --color-texto-acento: #af5320;
+
+  /* Fundo */
+  --color-fundo-pagina: #f4f4e6;
+  --color-fundo-superficie: #ffffff;
+  --color-fundo-sutil: #fcfcf2;
+  --color-fundo-inverso: #24282a;
+
+  /* Borda */
+  --color-borda-sutil: #e7e8d8;
+  --color-borda-media: rgba(36, 40, 42, 0.24);
+
+  /* Acao */
+  --color-acao-primaria: #24282a;
+  --color-acao-sobre-primaria: #ffffff;
+  --color-acao-secundaria: #f9a97d;
+  --color-acao-sobre-secundaria: #24282a;
+
+  /* Paleta da marca */
+  --color-conforto-100: #fcceb4;
+  --color-conforto-300: #fdbd96;
+  --color-conforto-500: #f9a97d;
+  --color-frescor-100: #e9f4d7;
+  --color-frescor-500: #c4dda6;
+  --color-luz-500: #fee084;
+  --color-escuro-700: #2d3133;
+  --color-escuro-900: #24282a;
+
+  /* Alfas */
+  --color-alfa-branco-16: rgba(255, 255, 255, 0.16);
+  --color-alfa-branco-65: rgba(255, 255, 255, 0.65);
+  --color-alfa-escuro-12: rgba(36, 40, 42, 0.12);
+
+  /* Vidro */
+  --color-vidro-preenchimento: rgba(255, 255, 255, 0.45);
+  --color-vidro-preenchimento-forte: rgba(255, 255, 255, 0.65);
+  --color-vidro-preenchimento-sutil: rgba(255, 255, 255, 0.28);
+  --color-vidro-borda: rgba(255, 255, 255, 0.85);
+  --color-vidro-borda-baixa: rgba(36, 40, 42, 0.12);
+  --color-vidro-brilho: rgba(255, 255, 255, 0.85);
+
+  /* Estados de formulario */
+  --color-estado-erro: #c0462a;
+  --color-borda-foco: #24282a;
+
+  /* Raios */
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-3xl: 36px;
+  --radius-pill: 999px;
+
+  /* Tipografia */
+  --font-display: var(--tipo-familia-display), "Helvetica Neue", Arial, sans-serif;
+  --font-texto: var(--tipo-familia-texto), "Helvetica Neue", Arial, sans-serif;
+
+  /* O desktop do Figma e 1440 com margem lateral de 80 */
+  --container-conteudo: 1280px;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  /* Nomes iguais aos do Figma, para leitura cruzada com o arquivo de design */
+  --texto-forte: #24282a;
+  --texto-corpo: #2d3133;
+  --texto-suave: #505456;
+  --texto-inverso: #ffffff;
+  --texto-acento: #af5320;
+  --fundo-pagina: #f4f4e6;
+  --fundo-superficie: #ffffff;
+  --fundo-sutil: #fcfcf2;
+  --fundo-inverso: #24282a;
+  --borda-sutil: #e7e8d8;
+  --borda-media: rgba(36, 40, 42, 0.24);
+  --acao-primaria: #24282a;
+  --acao-sobre-primaria: #ffffff;
+  --acao-secundaria: #f9a97d;
+  --acao-sobre-secundaria: #24282a;
+  --acento-conforto: #f9a97d;
+  --acento-frescor: #c4dda6;
+  --conforto-100: #fcceb4;
+  --conforto-300: #fdbd96;
+  --conforto-500: #f9a97d;
+  --frescor-100: #e9f4d7;
+  --frescor-500: #c4dda6;
+  --luz-500: #fee084;
+  --escuro-700: #2d3133;
+  --escuro-900: #24282a;
+  --alfa-branco-16: rgba(255, 255, 255, 0.16);
+  --alfa-branco-65: rgba(255, 255, 255, 0.65);
+  --alfa-escuro-12: rgba(36, 40, 42, 0.12);
+  --vidro-preenchimento: rgba(255, 255, 255, 0.45);
+  --vidro-preenchimento-forte: rgba(255, 255, 255, 0.65);
+  --vidro-preenchimento-sutil: rgba(255, 255, 255, 0.28);
+  --vidro-borda: rgba(255, 255, 255, 0.85);
+  --vidro-borda-baixa: rgba(36, 40, 42, 0.12);
+  --vidro-brilho: rgba(255, 255, 255, 0.85);
+  --estado-erro: #c0462a;
+  --borda-foco: #24282a;
+  --vidro-tinta-conforto: rgba(249, 169, 125, 0.18);
+  --raio-lg: 20px;
+  --raio-2xl: 32px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* Regras base dentro de @layer base: assim qualquer utilitário do Tailwind
+   (min-w-*, rounded-*, outline-*) ainda consegue sobrescrevê-las. Fora de camada,
+   elas venceriam todos os utilitários. */
+@layer base {
+  * {
+    min-width: 0;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  html {
+    scroll-behavior: smooth;
+    /* Espaço para a navbar flutuante ao pular para uma âncora */
+    scroll-padding-top: 100px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (min-width: 48rem) {
+    html {
+      scroll-padding-top: 124px;
+    }
+  }
+
+  body {
+    background: var(--fundo-pagina);
+    color: var(--texto-corpo);
+    font-family: var(--font-texto);
+    font-size: 18px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+    /* No toque, o feedback é o próprio componente — sem o flash cinza do navegador */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: var(--conforto-500);
+    color: var(--escuro-900);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--texto-acento);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  img,
+  svg {
+    display: block;
+    max-width: 100%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* =========================================================================
+   Estilos de texto do Figma
+   ========================================================================= */
+
+@layer components {
+  .t-display-xl,
+  .t-display-l,
+  .t-h1,
+  .t-h2,
+  .t-h3,
+  .t-h4,
+  .t-h5 {
+    font-family: var(--font-display);
+    color: var(--texto-forte);
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
+  .t-display-xl {
+    font-size: clamp(3rem, 7.22vw, 6.5rem);
+    line-height: 0.96;
+    letter-spacing: -0.03em;
+  }
+
+  .t-display-l {
+    font-size: clamp(2.6rem, 6.11vw, 5.5rem);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+  }
+
+  .t-h1 {
+    font-size: clamp(2.25rem, 3.89vw, 3.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+  }
+
+  .t-h2 {
+    font-size: clamp(1.9rem, 3.06vw, 2.75rem);
+    line-height: 1.14;
+    letter-spacing: -0.02em;
+  }
+
+  .t-h3 {
+    font-size: clamp(1.7rem, 2.5vw, 2.25rem);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+
+  .t-h4 {
+    font-size: clamp(1.4rem, 2.08vw, 1.875rem);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .t-h5 {
+    font-size: clamp(1.25rem, 1.67vw, 1.5rem);
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: -0.005em;
+  }
+
+  .t-corpo-g {
+    font-size: clamp(1.0625rem, 1.46vw, 1.3125rem);
+    line-height: 1.65;
+  }
+
+  .t-corpo {
+    font-size: 1.125rem;
+    line-height: 1.65;
+  }
+
+  .t-corpo-destaque {
+    font-size: 1.125rem;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .t-corpo-p {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .t-micro {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  /* Sobrancelha: o olho de secao, caixa alta com 14% de entreletra */
+  .t-sobrancelha {
+    font-family: var(--font-texto);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .t-tag {
+    font-family: var(--font-texto);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .t-campo {
+    font-family: var(--font-texto);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .t-nav {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .t-botao-g {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .t-botao-m {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+}
+
+/* =========================================================================
+   Materiais de vidro - os cinco niveis do KV
+   ========================================================================= */
+
+@utility vidro-01 {
+  backdrop-filter: blur(6px) saturate(140%);
+  -webkit-backdrop-filter: blur(6px) saturate(140%);
+  box-shadow:
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.55),
+    0 2px 8px 0 rgba(36, 40, 43, 0.06);
+}
+
+@utility vidro-02 {
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  box-shadow:
+    inset 0 1px 3px 0 rgba(255, 255, 255, 0.6),
+    0 10px 28px -4px rgba(36, 40, 43, 0.1);
+}
+
+@utility vidro-03 {
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow:
+    inset 0 1px 4px 0 rgba(255, 255, 255, 0.7),
+    0 20px 48px -8px rgba(36, 40, 43, 0.14);
+}
+
+@utility vidro-04 {
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow:
+    inset 0 1px 3px 0 rgba(255, 255, 255, 0.65),
+    0 16px 40px -6px rgba(36, 40, 43, 0.16),
+    0 2px 6px 0 rgba(36, 40, 43, 0.06);
+}
+
+@utility vidro-05 {
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  box-shadow:
+    inset 0 1px 5px 0 rgba(255, 255, 255, 0.8),
+    0 24px 56px -10px rgba(36, 40, 43, 0.18);
+}
+
+@utility elevacao-02 {
+  box-shadow:
+    0 8px 24px -4px rgba(36, 40, 43, 0.1),
+    0 2px 6px 0 rgba(36, 40, 43, 0.06);
+}
+
+/* =========================================================================
+   Utilitarios de layout
+   ========================================================================= */
+
+@utility conteudo {
+  width: 100%;
+  max-width: calc(var(--container-conteudo) + 160px);
+  margin-inline: auto;
+  padding-inline: clamp(20px, 5.56vw, 80px);
+}
+
+/* Bloco de secao: 40 de respiro no Figma, fluido aqui */
+@utility secao {
+  padding-block: clamp(56px, 5.56vw, 80px);
+}
+
+/* =========================================================================
+   Mobile first
+   Tudo abaixo parte do celular e acrescenta o layout de telas maiores com
+   min-width. Os breakpoints são os do Tailwind: md = 48rem, lg = 64rem.
+   ========================================================================= */
+
+@layer components {
+  /* Lista de cards: no celular vira uma fileira de arrasto lateral com o
+     próximo card aparecendo pela borda; do md em diante, grade. */
+  .rolagem-lateral {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: clamp(20px, 5.56vw, 80px);
+    /* sangra até a borda da tela e dá folga para a sombra dos cards */
+    padding: 8px clamp(20px, 5.56vw, 80px) 32px;
+    margin: -8px calc(-1 * clamp(20px, 5.56vw, 80px)) -32px;
+    scrollbar-width: none;
+  }
+
+  .rolagem-lateral::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rolagem-lateral > * {
+    flex: 0 0 min(85%, 340px);
+    scroll-snap-align: start;
+  }
+
+  @media (min-width: 48rem) {
+    .rolagem-lateral {
+      display: grid;
+      overflow: visible;
+      scroll-snap-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .rolagem-lateral > * {
+      flex: none;
+    }
+  }
+
+  /* Fileira de chips de filtro: arrasto lateral no celular, quebra de linha
+     só a partir do lg, onde cabe numa linha como no Figma. */
+  .linha-de-chips {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 4px clamp(20px, 5.56vw, 80px) 12px;
+    margin: -4px calc(-1 * clamp(20px, 5.56vw, 80px)) -12px;
+    scrollbar-width: none;
+  }
+
+  .linha-de-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .linha-de-chips > * {
+    flex: 0 0 auto;
+  }
+
+  @media (min-width: 64rem) {
+    .linha-de-chips {
+      flex-wrap: wrap;
+      overflow: visible;
+      padding: 0;
+      margin: 0;
+    }
+  }
+
+  /* Corte da lâmina: no celular as camadas se separam na vertical, uma por
+     linha; do md em diante, na horizontal, uma por coluna. `--recuo` é quanto
+     cada camada ainda está deslocada em direção ao centro da pilha. */
+  .corte-camada {
+    /* leque: quanto cada lâmina aparece atrás da outra na pilha */
+    --leque: 10px;
+    translate: 0 calc(var(--recuo, 0) * (100% + 0.75rem));
+  }
+
+  @media (min-width: 48rem) {
+    .corte-camada {
+      --leque: 26px;
+      translate: calc(var(--recuo, 0) * (100% + 1.5rem)) 0;
+    }
+  }
+
+  /* Segmento dividido: no celular os lados se empilham e a diagonal de 13°
+     corre na horizontal; do md em diante, lado a lado, com a diagonal na
+     vertical deslocada por `--corte` (o hover empurra a aresta). */
+  .segmento-quente,
+  .segmento-frio {
+    transition: clip-path 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .segmento-quente {
+    clip-path: polygon(0 0, 100% 0, 100% calc(50% - 40px), 0 calc(50% + 40px));
+  }
+
+  .segmento-frio {
+    clip-path: polygon(0 calc(50% + 40px), 100% calc(50% - 40px), 100% 100%, 0 100%);
+  }
+
+  .segmento-aresta {
+    left: -10%;
+    right: -10%;
+    top: 50%;
+    height: 2.5px;
+    rotate: -13deg;
+  }
+
+  @media (min-width: 48rem) {
+    .segmento-quente {
+      clip-path: polygon(
+        0 0,
+        calc(var(--corte, 50%) + 5%) 0,
+        calc(var(--corte, 50%) - 5%) 100%,
+        0 100%
+      );
+    }
+
+    .segmento-frio {
+      clip-path: polygon(
+        calc(var(--corte, 50%) + 5%) 0,
+        100% 0,
+        100% 100%,
+        calc(var(--corte, 50%) - 5%) 100%
+      );
+    }
+
+    .segmento-aresta {
+      left: var(--corte, 50%);
+      right: auto;
+      top: -40px;
+      bottom: -40px;
+      width: 2.5px;
+      height: auto;
+      rotate: 13deg;
+      transition: left 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  }
+
+  /* Cascata das lâminas (golden circle): no celular cada camada recua para a
+     direita; no lg, desce, como no Figma. `--i` é a posição da camada. */
+  .cascata {
+    margin-inline-start: calc(var(--i, 0) * 12px);
+  }
+
+  @media (min-width: 64rem) {
+    .cascata {
+      margin-inline-start: 0;
+      margin-top: calc(var(--i, 0) * 26px);
+    }
+  }
+}
+
+/* =========================================================================
+   Animacoes
+   ========================================================================= */
+
+@keyframes rrf-sobe {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rrf-revelar {
+  animation: rrf-sobe 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

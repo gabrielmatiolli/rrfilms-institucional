@@ -1,0 +1,294 @@
+// Prisma schema do painel administrativo RR Film.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ---------------------------------------------------------------------------
+// Acesso ao painel
+// ---------------------------------------------------------------------------
+
+enum AdminRole {
+  /** Gerencia conteúdo e também as contas de acesso. */
+  DONO
+  /** Gerencia só o conteúdo. */
+  EDITOR
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  nome         String
+  email        String    @unique
+  passwordHash String
+  papel        AdminRole @default(EDITOR)
+  ativo        Boolean   @default(true)
+
+  // Bloqueio por tentativas consecutivas incorretas — ver
+  // src/lib/admin/seguranca.ts. ultimoLogin* são só informativos.
+  tentativasFalhas Int       @default(0)
+  bloqueadoAte     DateTime?
+  ultimoLoginEm    DateTime?
+  ultimoLoginIp    String?
+
+  // Invalida em bloco as sessões já emitidas: o token carrega a versão do
+  // momento em que foi assinado e é recusado quando ela não bate mais. Sobe
+  // na troca e na redefinição de senha, ao desativar a conta e em "encerrar
+  // sessões em todos os dispositivos" — sem isso, um
+  // JWT roubado continuaria valendo até expirar, mesmo após trocar a senha.
+  versaoSessao Int @default(0)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+}
+
+enum LoginAttemptReason {
+  SUCESSO
+  CREDENCIAIS_INVALIDAS
+  CONTA_BLOQUEADA
+  CONTA_INATIVA
+  IP_BLOQUEADO
+  CAPTCHA_FALHOU
+}
+
+/// Auditoria de tentativas de login (sucesso e falha) — alimenta o bloqueio
+/// por IP (ipBloqueado) e o histórico exibido em /admin/configuracoes.
+model LoginAttempt {
+  id        String             @id @default(cuid())
+  email     String
+  ip        String
+  userAgent String?            @db.Text
+  sucesso   Boolean
+  motivo    LoginAttemptReason
+  criadoEm  DateTime           @default(now())
+
+  @@index([email, sucesso, criadoEm])
+  @@index([ip, sucesso, criadoEm])
+  @@index([criadoEm])
+}
+
+/// Feed de atividade do painel — quem mexeu em quê.
+model ActivityLog {
+  id        String   @id @default(cuid())
+  mensagem  String   @db.Text
+  autor     String?
+  criadoEm  DateTime @default(now())
+
+  @@index([criadoEm])
+}
+
+// ---------------------------------------------------------------------------
+// Blog
+// ---------------------------------------------------------------------------
+
+enum PostStatus {
+  PUBLICADO
+  RASCUNHO
+}
+
+/// Filtros da listagem do blog. O ícone segue a família Ícone/* do design
+/// system (src/components/ui/Icone.tsx).
+model BlogCategoria {
+  id       String @id @default(cuid())
+  slug     String @unique
+  rotulo   String
+  icone    String @default("janela")
+  ordem    Int    @default(0)
+  ativo    Boolean @default(true)
+
+  posts BlogPost[]
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+}
+
+model BlogPost {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  titulo      String
+  resumo      String  @db.Text
+  /// Block[] — mesmo formato do editor de blocos (src/lib/admin/blocos.ts),
+  /// permite intercalar texto, imagem, citação e galeria no corpo do post.
+  conteudo    Json
+  capa        String
+  autor       String  @default("Equipe RR Film")
+
+  categoriaId String?
+  categoria   BlogCategoria? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+
+  minutosLeitura Int        @default(5)
+  status         PostStatus @default(RASCUNHO)
+  /// Post grande do topo de /blog. A action garante que só um fique marcado.
+  destaque       Boolean    @default(false)
+  publicadoEm    DateTime?
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([status, publicadoEm])
+  @@index([categoriaId])
+}
+
+// ---------------------------------------------------------------------------
+// Serviços
+// ---------------------------------------------------------------------------
+
+/// Família cromática do card no design system — Cartoes.tsx, LinhaDeCard.
+enum LinhaCromatica {
+  CONFORTO
+  LUZ
+  FRESCOR
+}
+
+model Servico {
+  id        String         @id @default(cuid())
+  slug      String         @unique
+  linha     LinhaCromatica @default(CONFORTO)
+  tag       String
+  titulo    String
+  descricao String         @db.Text
+  foto      String
+  /// { valor: string; rotulo: string }[] — a faixa de dados do card.
+  /// Sem @default de propósito: ver a nota sobre TEXT/JSON no fim do arquivo.
+  dados     Json
+  href      String         @default("/contato")
+  ordem     Int            @default(0)
+  ativo     Boolean        @default(true)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([ativo, ordem])
+}
+
+// ---------------------------------------------------------------------------
+// Produtos (as linhas de película do portfólio)
+// ---------------------------------------------------------------------------
+
+model Produto {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  nome      String
+  /// Segunda linha do título, em Acento — padrão tipográfico da marca.
+  destaque  String
+  promessa  String  @db.Text
+  descricao String  @db.Text
+  /// Vazio quando ainda não há material fotográfico da linha.
+  foto      String  @default("")
+  ordem     Int     @default(0)
+  ativo     Boolean @default(true)
+
+  /// Quando o produto tem página própria gerada pelo painel, o CTA do card
+  /// aponta para /produtos/<slug> e `conteudo` alimenta essa página. Quando
+  /// não tem, o CTA usa `hrefExterno` (âncora em /servicos, por exemplo).
+  temPaginaPropria Boolean @default(false)
+  hrefExterno      String  @default("/contato")
+  /// Block[] — corpo da página própria. Sem @default: ver a nota no fim do arquivo.
+  conteudo         Json
+  /// Metadados da página própria.
+  metaTitulo       String  @default("")
+  /// VARCHAR e não TEXT justamente para poder ter default — o form limita a 320.
+  metaDescricao    String  @default("") @db.VarChar(320)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([ativo, ordem])
+}
+
+// ---------------------------------------------------------------------------
+// Galerias de obra
+// ---------------------------------------------------------------------------
+
+/// Uma galeria por seção do site. `chave` é fixa e casa com a página que a
+/// consome (home, servicos, para-casas, para-empresas, produto-nanoceramica) —
+/// o painel edita cabeçalho e fotos, mas não cria chaves novas.
+model Galeria {
+  id          String @id @default(cuid())
+  chave       String @unique
+  /// Só para o painel se explicar: "Galeria da Home", "Galeria de Serviços"…
+  nomeNoPainel String
+  sobrancelha String
+  titulo      String
+  lead        String @db.Text
+  ordem       Int    @default(0)
+
+  itens GaleriaItem[]
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+}
+
+model GaleriaItem {
+  id        String  @id @default(cuid())
+  galeriaId String
+  galeria   Galeria @relation(fields: [galeriaId], references: [id], onDelete: Cascade)
+  imagem    String
+  /// Texto alternativo — obrigatório no painel, é o que o leitor de tela lê.
+  alt       String
+  ordem     Int     @default(0)
+
+  @@index([galeriaId, ordem])
+}
+
+// ---------------------------------------------------------------------------
+// Conteúdo solto do site
+// ---------------------------------------------------------------------------
+
+model Depoimento {
+  id       String  @id @default(cuid())
+  citacao  String  @db.Text
+  nome     String
+  contexto String
+  ordem    Int     @default(0)
+  ativo    Boolean @default(true)
+  /// O componente Depoimento do Figma registra a regra: nome real de cliente
+  /// só entra no ar com autorização por escrito. Sem isso o site não publica.
+  autorizado Boolean @default(false)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([ativo, ordem])
+}
+
+/// Dados institucionais — linha única (id fixo "singleton"). Substitui os
+/// valores fixos de src/lib/site.ts que precisam mudar sem deploy.
+model ConfiguracaoSite {
+  id          String @id @default("singleton")
+  telefone    String
+  telefoneLink String
+  whatsapp    String
+  email       String
+  instagram   String
+  instagramUrl String
+  horario     String
+  atendimento String
+  cidade      String
+  cnpj        String
+
+  atualizadoEm DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Nota sobre defaults em TEXT e JSON
+// ---------------------------------------------------------------------------
+//
+// Nenhuma coluna TEXT ou JSON deste schema tem @default, e isso é deliberado:
+//
+// - MySQL 8 (o banco de dev) recusa default literal nesses tipos — só aceita
+//   a forma de expressão, DEFAULT (''). O Prisma gera a literal, DEFAULT '',
+//   e a migration quebra com o erro 1101.
+// - Em JSON é pior: o Prisma simplesmente omite o default no SQL, mas o
+//   cliente gerado continua tratando o campo como opcional no `create`. O
+//   insert que omite o campo compila e só falha em produção.
+//
+// Sem @default, o cliente exige o campo em todo `create` e o compilador pega
+// o esquecimento. Quando um campo curto precisa mesmo de default, ele vira
+// VARCHAR (ver Produto.metaDescricao), que aceita default literal tanto no
+// MySQL quanto no MariaDB da Hostinger.
