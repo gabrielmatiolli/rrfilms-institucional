@@ -6,9 +6,10 @@ import Link from "next/link";
 import CampoDeImagem from "@/components/admin/CampoDeImagem";
 import { Area, Campo, Interruptor, Selecao } from "@/components/admin/Campos";
 import EditorDeDados from "@/components/admin/EditorDeDados";
+import EditorDeBlocos from "@/components/admin/editor/EditorDeBlocos";
 import { BotaoPainel, Cartao, Erro, TituloDeBloco } from "@/components/admin/Ui";
 import type { EstadoDoServico } from "@/app/admin/(painel)/servicos/acoes";
-import type { DadoDeBloco } from "@/lib/admin/blocos";
+import type { Bloco, DadoDeBloco } from "@/lib/admin/blocos";
 
 export interface ValoresDoServico {
   titulo: string;
@@ -16,9 +17,14 @@ export interface ValoresDoServico {
   descricao: string;
   linha: "CONFORTO" | "LUZ" | "FRESCOR";
   foto: string;
-  href: string;
   ativo: boolean;
   dados: DadoDeBloco[];
+  temPaginaPropria: boolean;
+  href: string;
+  metaTitulo: string;
+  metaDescricao: string;
+  conteudo: Bloco[];
+  slug?: string;
 }
 
 interface Props {
@@ -33,6 +39,9 @@ export default function FormularioDeServico({ acao, valores, rotuloDeEnvio }: Pr
   const [estado, enviar, enviando] = useActionState(acao, estadoInicial);
   const [foto, setFoto] = useState(valores.foto);
   const [dados, setDados] = useState<DadoDeBloco[]>(valores.dados);
+  // Decide se o CTA do card abre a interna do serviço ou um destino avulso —
+  // os dois blocos de campos se excluem.
+  const [temPagina, setTemPagina] = useState(valores.temPaginaPropria);
 
   return (
     <form action={enviar} className="flex flex-col gap-5">
@@ -80,16 +89,72 @@ export default function FormularioDeServico({ acao, valores, rotuloDeEnvio }: Pr
             ]}
             dica="Define a cor do card no design system."
           />
-          <Campo
-            id="href"
-            rotulo="Destino do card"
-            required
-            defaultValue={valores.href}
-            placeholder="/contato"
-            dica="Caminho dentro do site. Aceita âncora, como /servicos#seguranca."
-          />
         </div>
       </Cartao>
+
+      <Cartao>
+        <TituloDeBloco dica="Para onde vai o botão “Ver serviço”.">Destino</TituloDeBloco>
+        <div className="flex flex-col gap-5">
+          <Interruptor
+            id="temPaginaPropria"
+            rotulo="Este serviço tem interna própria"
+            checked={temPagina}
+            onChange={(e) => setTemPagina(e.target.checked)}
+            dica={
+              valores.slug
+                ? `A interna fica em /servicos/${valores.slug}.`
+                : "A interna é criada no endereço /servicos/<nome-do-serviço>."
+            }
+          />
+
+          {/* Os campos do modo desligado ficam montados e só se escondem: input
+              com display:none continua indo no envio. Desmontar faria o save
+              gravar vazio por cima do que já estava no banco. */}
+          <div className={temPagina ? "hidden" : undefined}>
+            <Campo
+              id="href"
+              rotulo="Destino do card"
+              defaultValue={valores.href}
+              placeholder="/contato"
+              dica="Caminho dentro do site. Aceita âncora, como /servicos#seguranca."
+            />
+          </div>
+        </div>
+      </Cartao>
+
+      {/* Mesmo motivo: desligar a interna não apaga o conteúdo nem os
+          metadados — eles esperam no banco o dia em que ela for religada. */}
+      <div className={temPagina ? "flex flex-col gap-5" : "hidden"}>
+        <Cartao>
+          <TituloDeBloco dica="O corpo da interna do serviço, montado bloco a bloco.">
+            Conteúdo da interna
+          </TituloDeBloco>
+          <EditorDeBlocos nome="conteudo" iniciais={valores.conteudo} pasta="servicos" />
+        </Cartao>
+
+        <Cartao>
+          <TituloDeBloco dica="Como a interna aparece no Google e ao ser compartilhada.">
+            Busca
+          </TituloDeBloco>
+          <div className="flex flex-col gap-5">
+            <Campo
+              id="metaTitulo"
+              rotulo="Título na busca"
+              maxLength={120}
+              defaultValue={valores.metaTitulo}
+              dica="Vazio, usa o título do serviço."
+            />
+            <Area
+              id="metaDescricao"
+              rotulo="Descrição na busca"
+              rows={3}
+              maxLength={320}
+              defaultValue={valores.metaDescricao}
+              dica="Vazio, usa a descrição do card."
+            />
+          </div>
+        </Cartao>
+      </div>
 
       <Cartao>
         <TituloDeBloco>Foto</TituloDeBloco>

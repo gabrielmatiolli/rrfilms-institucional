@@ -9,6 +9,7 @@ import { exigirAdmin } from "@/lib/admin/sessao";
 import { registrarAtividade } from "@/lib/admin/atividade";
 import { gerarSlug } from "@/lib/admin/slug";
 import { caminhoDeImagemValido } from "@/lib/admin/upload";
+import { lerBlocos, validarBlocos } from "@/lib/admin/blocos";
 import type { Prisma } from "@/generated/prisma/client";
 
 export interface EstadoDoServico {
@@ -21,7 +22,10 @@ const esquema = z.object({
   descricao: z.string().trim().min(1, "Escreva a descrição.").max(600),
   linha: z.enum(["CONFORTO", "LUZ", "FRESCOR"]),
   foto: z.string().trim().min(1, "Escolha uma foto."),
+  temPaginaPropria: z.boolean(),
   href: z.string().trim().min(1, "Informe o destino do card."),
+  metaTitulo: z.string().trim().max(120),
+  metaDescricao: z.string().trim().max(320),
   ativo: z.boolean(),
   dados: z
     .array(
@@ -33,11 +37,13 @@ const esquema = z.object({
     .max(4),
 });
 
-function revalidarServicos() {
+function revalidarServicos(slug?: string) {
   revalidatePath("/servicos");
   revalidatePath("/");
+  revalidatePath("/sitemap.xml");
   revalidatePath("/admin/servicos");
   revalidatePath("/admin");
+  if (slug) revalidatePath(`/servicos/${slug}`);
 }
 
 async function slugUnico(titulo: string, ignorarId?: string) {
@@ -65,7 +71,10 @@ async function prepararDados(formulario: FormData, ignorarId?: string) {
     descricao: formulario.get("descricao"),
     linha: formulario.get("linha"),
     foto: formulario.get("foto"),
+    temPaginaPropria: formulario.get("temPaginaPropria") === "on",
     href: formulario.get("href"),
+    metaTitulo: formulario.get("metaTitulo") ?? "",
+    metaDescricao: formulario.get("metaDescricao") ?? "",
     ativo: formulario.get("ativo") === "on",
     dados: dadosBrutos,
   });
@@ -78,10 +87,21 @@ async function prepararDados(formulario: FormData, ignorarId?: string) {
   if (!caminhoDeImagemValido(dados.foto)) {
     return { erro: "A foto precisa ser uma imagem do próprio site." };
   }
-  // O href vira `href` de um <Link>: aceita caminho interno e âncora, não URL externa.
-  if (!dados.href.startsWith("/") || dados.href.startsWith("//")) {
+  // O href vira `href` de um <Link>: aceita caminho interno e âncora, não URL
+  // externa. Só vale quando o card não aponta para a interna do serviço.
+  if (!dados.temPaginaPropria && (!dados.href.startsWith("/") || dados.href.startsWith("//"))) {
     return { erro: "O destino precisa ser um caminho do site, como /contato." };
   }
+
+  let blocos;
+  try {
+    blocos = lerBlocos(JSON.parse(String(formulario.get("conteudo") ?? "[]")));
+  } catch {
+    return { erro: "Não foi possível ler o conteúdo da interna." };
+  }
+
+  const erroNosBlocos = validarBlocos(blocos);
+  if (erroNosBlocos) return { erro: erroNosBlocos };
 
   return {
     valores: {
@@ -91,7 +111,11 @@ async function prepararDados(formulario: FormData, ignorarId?: string) {
       descricao: dados.descricao,
       linha: dados.linha,
       foto: dados.foto,
+      temPaginaPropria: dados.temPaginaPropria,
       href: dados.href,
+      conteudo: blocos as unknown as Prisma.InputJsonValue,
+      metaTitulo: dados.metaTitulo,
+      metaDescricao: dados.metaDescricao,
       ativo: dados.ativo,
       dados: dados.dados as unknown as Prisma.InputJsonValue,
     },
@@ -118,7 +142,7 @@ export async function criarServico(
   });
 
   await registrarAtividade(`Criou o serviço "${servico.titulo}"`, admin.nome);
-  revalidarServicos();
+  revalidarServicos(servico.slug);
   redirect("/admin/servicos");
 }
 
@@ -129,8 +153,11 @@ export async function atualizarServico(
 ): Promise<EstadoDoServico> {
   const admin = await exigirAdmin();
 
-  const existente = await prisma.servico.findUnique({ where: { id }, select: { id: true } });
-  if (!existente) return { erro: "Serviço não encontrado." };
+  const anterior = await prisma.servico.findUnique({
+    where: { id },
+    select: { id: true, slug: true },
+  });
+  if (!anterior) return { erro: "Serviço não encontrado." };
 
   const { erro, valores } = await prepararDados(formulario, id);
   if (erro || !valores) return { erro };
@@ -138,7 +165,9 @@ export async function atualizarServico(
   const servico = await prisma.servico.update({ where: { id }, data: valores });
 
   await registrarAtividade(`Atualizou o serviço "${servico.titulo}"`, admin.nome);
-  revalidarServicos();
+  revalidarServicos(servico.slug);
+  // O slug acompanha o título; a rota antiga também sai do cache.
+  if (anterior.slug !== servico.slug) revalidatePath(`/servicos/${anterior.slug}`);
   redirect("/admin/servicos");
 }
 
@@ -149,7 +178,7 @@ export async function excluirServico(formulario: FormData) {
 
   const servico = await prisma.servico.delete({ where: { id } });
   await registrarAtividade(`Excluiu o serviço "${servico.titulo}"`, admin.nome);
-  revalidarServicos();
+  revalidarServicos(servico.slug);
 }
 
 /** Sobe ou desce um serviço na grade, trocando a ordem com o vizinho. */

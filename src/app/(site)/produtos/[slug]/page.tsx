@@ -80,7 +80,7 @@ export default async function PaginaDeProduto({
             {produto.conteudo.length > 0 ? (
               <Blocos blocos={produto.conteudo} />
             ) : (
-              <SemConteudo />
+              <SemConteudo voltar={{ href: "/servicos", rotulo: "Ver todos os serviços" }} />
             )}
           </div>
         </div>

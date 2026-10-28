@@ -113,7 +113,9 @@ async function semearServicos() {
     await prisma.servico.upsert({
       where: { slug: servico.slug },
       update: campos,
-      create: { slug: servico.slug, ...campos },
+      // `conteudo` só no create: reseedar não pode apagar a interna de um
+      // serviço que já foi montada no painel.
+      create: { slug: servico.slug, ...campos, conteudo: [] as unknown as Prisma.InputJsonValue },
     });
   }
   console.log(`· ${servicos.length} serviços`);

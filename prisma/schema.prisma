@@ -156,9 +156,20 @@ model Servico {
   /// { valor: string; rotulo: string }[] — a faixa de dados do card.
   /// Sem @default de propósito: ver a nota sobre TEXT/JSON no fim do arquivo.
   dados     Json
-  href      String         @default("/contato")
   ordem     Int            @default(0)
   ativo     Boolean        @default(true)
+
+  /// Quando o serviço tem interna gerada pelo painel, o CTA do card aponta
+  /// para /servicos/<slug> e `conteudo` alimenta essa página. Quando não tem,
+  /// o CTA usa `href` (a linha de película em /produtos, por exemplo).
+  temPaginaPropria Boolean @default(false)
+  href             String  @default("/contato")
+  /// Block[] — corpo da interna. Sem @default: ver a nota no fim do arquivo.
+  conteudo         Json
+  /// Metadados da interna.
+  metaTitulo       String  @default("")
+  /// VARCHAR e não TEXT justamente para poder ter default — o form limita a 320.
+  metaDescricao    String  @default("") @db.VarChar(320)
 
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt

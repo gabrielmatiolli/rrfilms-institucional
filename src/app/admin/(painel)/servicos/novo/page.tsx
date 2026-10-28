@@ -25,9 +25,13 @@ export default async function NovoServico() {
           descricao: "",
           linha: "CONFORTO",
           foto: "",
-          href: "/contato",
           ativo: true,
           dados: [],
+          temPaginaPropria: false,
+          href: "/contato",
+          metaTitulo: "",
+          metaDescricao: "",
+          conteudo: [],
         }}
       />
     </>

@@ -11,17 +11,52 @@ import { icones } from "@/components/ui/Icone";
 import { Secao } from "@/components/ui/Secao";
 import { listarFiltros, listarPosts, postEmDestaque } from "@/lib/dados/blog";
 
-export const metadata: Metadata = {
+const metadataBase: Metadata = {
   title: "Blog",
   description:
     "Comparações honestas, sem marketing, e o que ninguém conta antes de vender película para vidro.",
 };
 
-export default async function Blog() {
-  const [destaque, filtros, todos] = await Promise.all([
-    postEmDestaque(),
+/**
+ * O destino de um chip. A âncora leva de volta à lista: sem ela a navegação
+ * cairia no topo da página e o leitor não veria o resultado do filtro.
+ */
+function enderecoDoFiltro(slug: string) {
+  return slug ? `/blog?categoria=${encodeURIComponent(slug)}#artigos` : "/blog#artigos";
+}
+
+/** `/blog?categoria=<slug>` — o chip de filtro acima da lista de artigos. */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ categoria?: string }>;
+}): Promise<Metadata> {
+  const { categoria } = await searchParams;
+  if (!categoria) return metadataBase;
+
+  // A listagem filtrada é quase a mesma página: o canônico aponta para /blog
+  // para os buscadores não tratarem cada chip como conteúdo duplicado.
+  return { ...metadataBase, alternates: { canonical: "/blog" } };
+}
+
+export default async function Blog({
+  searchParams,
+}: {
+  searchParams: Promise<{ categoria?: string }>;
+}) {
+  const [{ categoria: pedida }, filtros] = await Promise.all([
+    searchParams,
     listarFiltros(),
-    listarPosts(),
+  ]);
+
+  // Categoria que não existe mais (link antigo, URL digitada à mão) cai em "Todos".
+  const ativa = filtros.find((filtro) => filtro.slug && filtro.slug === pedida)?.slug;
+
+  // Com um filtro ligado a grade mostra a categoria inteira; o bloco grande do
+  // topo é da capa do blog, não de uma categoria.
+  const [destaque, todos] = await Promise.all([
+    ativa ? null : postEmDestaque(),
+    listarPosts(ativa),
   ]);
 
   // O post em destaque já ocupa o bloco grande do topo — não se repete na grade.
@@ -67,10 +102,14 @@ export default async function Blog() {
       <Secao fundo="pagina" id="artigos">
         {filtros.length > 1 && (
           <div className="linha-de-chips">
-            {filtros.map((filtro, i) => {
+            {filtros.map((filtro) => {
               const Icone = icones[filtro.icone];
               return (
-                <ChipDeVidroLink key={filtro.rotulo} href="#artigos" ativo={i === 0}>
+                <ChipDeVidroLink
+                  key={filtro.slug || "todos"}
+                  href={enderecoDoFiltro(filtro.slug)}
+                  ativo={filtro.slug === (ativa ?? "")}
+                >
                   <span className="mr-2 inline-flex">
                     <Icone tamanho={18} />
                   </span>
@@ -87,6 +126,14 @@ export default async function Blog() {
               <CardDeBlog key={post.slug} post={post} />
             ))}
           </div>
+        ) : ativa ? (
+          <p className="mt-10 t-corpo text-texto-suave">
+            Ainda não há artigo nesta categoria.{" "}
+            <Link href={enderecoDoFiltro("")} className="underline">
+              Ver todos os artigos
+            </Link>
+            .
+          </p>
         ) : (
           <p className="mt-10 t-corpo text-texto-suave">
             {destaque

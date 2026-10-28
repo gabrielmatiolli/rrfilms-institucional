@@ -1,6 +1,6 @@
 /**
- * Blocos de conteúdo do editor — usados no corpo dos posts do blog e nas
- * páginas próprias de produto.
+ * Blocos de conteúdo do editor — usados no corpo dos posts do blog, nas internas
+ * de serviço e nas páginas próprias de produto.
  *
  * Os valores de `props` são sempre string: blocos com lista (galeria, lista,
  * dados) guardam um JSON.stringify() no campo. Isso mantém o inspetor genérico

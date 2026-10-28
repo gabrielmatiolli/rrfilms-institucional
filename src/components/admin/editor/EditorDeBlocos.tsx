@@ -28,11 +28,12 @@ import {
   type Bloco,
 } from "@/lib/admin/blocos";
 import { cn } from "@/lib/utils";
+import type { PastaDeUpload } from "@/lib/imagens";
 
 interface Props {
   nome: string;
   iniciais: Bloco[];
-  pasta: "blog" | "produtos";
+  pasta: PastaDeUpload;
 }
 
 /**
@@ -143,7 +144,7 @@ export default function EditorDeBlocos({ nome, iniciais, pasta }: Props) {
 
 interface LinhaProps {
   bloco: Bloco;
-  pasta: "blog" | "produtos";
+  pasta: PastaDeUpload;
   aberto: boolean;
   primeiro: boolean;
   ultimo: boolean;

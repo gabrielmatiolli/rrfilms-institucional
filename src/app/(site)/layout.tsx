@@ -7,6 +7,20 @@ import { TagsDeMedicao } from "@/components/layout/TagsDeMedicao";
 import { contatoDoSite } from "@/lib/dados/configuracao";
 
 /**
+ * Todo o conteúdo do site público sai do banco, e quem edita é o painel.
+ *
+ * Sem isto o Next pré-renderiza cada página no `build` e serve esse HTML para
+ * sempre (`x-nextjs-cache: HIT`): o `revalidatePath()` das actions do painel é
+ * a única coisa que limpa esse cache, e na Hostinger ele não surte efeito —
+ * post publicado, destaque trocado e categoria nova continuavam invisíveis até
+ * o próximo deploy. Montar a página a cada pedido é o que /blog/[slug] já fazia
+ * (por ser rota dinâmica) e é por isso que só ela aparecia atualizada.
+ *
+ * Fica no layout de propósito: vale para todas as rotas do grupo `(site)`.
+ */
+export const dynamic = "force-dynamic";
+
+/**
  * A moldura do site público. O painel em /admin não passa por aqui.
  *
  * As tags de medição (GTM, Google, Meta) e o aviso de cookies ficam aqui, e não

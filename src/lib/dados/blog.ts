@@ -45,15 +45,20 @@ function paraResumo(post: PostComCategoria, metaCurta = false): ResumoDePost {
 const PUBLICADOS = { status: "PUBLICADO" } as const;
 const MAIS_NOVOS_PRIMEIRO = [{ publicadoEm: "desc" }, { criadoEm: "desc" }] as const;
 
-/** Todos os posts publicados, mais recentes primeiro. */
-export const listarPosts = cache(async (): Promise<ResumoDePost[]> => {
-  const posts = await prisma.blogPost.findMany({
-    where: PUBLICADOS,
-    orderBy: [...MAIS_NOVOS_PRIMEIRO],
-    include: { categoria: { select: { rotulo: true } } },
-  });
-  return posts.map((post) => paraResumo(post));
-});
+/**
+ * Os posts publicados, mais recentes primeiro. Com `categoria` (o slug de um
+ * chip de filtro), só os daquela categoria.
+ */
+export const listarPosts = cache(
+  async (categoria?: string): Promise<ResumoDePost[]> => {
+    const posts = await prisma.blogPost.findMany({
+      where: categoria ? { ...PUBLICADOS, categoria: { slug: categoria } } : PUBLICADOS,
+      orderBy: [...MAIS_NOVOS_PRIMEIRO],
+      include: { categoria: { select: { rotulo: true } } },
+    });
+    return posts.map((post) => paraResumo(post));
+  },
+);
 
 /**
  * O post grande do topo de /blog. Sem nenhum marcado como destaque, cai no
@@ -62,6 +67,9 @@ export const listarPosts = cache(async (): Promise<ResumoDePost[]> => {
 export const postEmDestaque = cache(async (): Promise<ResumoDePost | null> => {
   const marcado = await prisma.blogPost.findFirst({
     where: { ...PUBLICADOS, destaque: true },
+    // A action deixa só um marcado, mas um reseed do banco pode remarcar o
+    // antigo: com dois marcados, quem vale é o mais novo.
+    orderBy: [...MAIS_NOVOS_PRIMEIRO],
     include: { categoria: { select: { rotulo: true } } },
   });
   if (marcado) return paraResumo(marcado);
@@ -107,6 +115,8 @@ export const postsRelacionados = cache(
 );
 
 export interface FiltroDoBlog {
+  /** Slug da categoria. Vazio no "Todos", que não filtra nada. */
+  slug: string;
   rotulo: string;
   icone: NomeDeIcone;
 }
@@ -119,8 +129,9 @@ export const listarFiltros = cache(async (): Promise<FiltroDoBlog[]> => {
   });
 
   return [
-    { rotulo: "Todos", icone: "janela" as NomeDeIcone },
+    { slug: "", rotulo: "Todos", icone: "janela" as NomeDeIcone },
     ...categorias.map((categoria) => ({
+      slug: categoria.slug,
       rotulo: categoria.rotulo,
       // Um ícone renomeado no design system não pode quebrar a página.
       icone: (categoria.icone in icones ? categoria.icone : "janela") as NomeDeIcone,

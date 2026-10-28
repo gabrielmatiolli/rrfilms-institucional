@@ -4,7 +4,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 
-import { ehCaminhoDeImagem } from "@/lib/imagens";
+import { ehCaminhoDeImagem, PASTAS_DE_UPLOAD } from "@/lib/imagens";
 
 const TIPOS_ACEITOS = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const TAMANHO_MAXIMO = 8 * 1024 * 1024;
@@ -15,7 +15,7 @@ const TAMANHO_MAXIMO = 8 * 1024 * 1024;
 const LARGURA_MAXIMA = 1920;
 
 /** Pastas permitidas — evita que um `folder` vindo do form escape do diretório. */
-const PASTAS = new Set(["blog", "servicos", "produtos", "galerias", "depoimentos"]);
+const PASTAS: ReadonlySet<string> = new Set(PASTAS_DE_UPLOAD);
 
 export interface ResultadoDeUpload {
   url?: string;

@@ -7,6 +7,7 @@ import { atualizarServico } from "@/app/admin/(painel)/servicos/acoes";
 import { exigirAdmin } from "@/lib/admin/sessao";
 import { prisma } from "@/lib/prisma";
 import { dadosDeServico } from "@/lib/dados/servicos";
+import { lerBlocos } from "@/lib/admin/blocos";
 import { dataEHora } from "@/lib/datas";
 
 export const metadata: Metadata = { title: "Editar serviço" };
@@ -39,9 +40,14 @@ export default async function EditarServico({
           descricao: servico.descricao,
           linha: servico.linha,
           foto: servico.foto,
-          href: servico.href,
           ativo: servico.ativo,
           dados: dadosDeServico(servico.dados),
+          temPaginaPropria: servico.temPaginaPropria,
+          href: servico.href,
+          metaTitulo: servico.metaTitulo,
+          metaDescricao: servico.metaDescricao,
+          conteudo: lerBlocos(servico.conteudo),
+          slug: servico.slug,
         }}
       />
     </>

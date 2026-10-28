@@ -10,6 +10,20 @@
  */
 export type CaminhoDeImagem = `/${string}`;
 
+/**
+ * As pastas de `public/uploads/`. Fonte única: o `salvarImagem()` recusa o que
+ * não estiver aqui e o editor de blocos só aceita uma delas na prop `pasta`.
+ */
+export const PASTAS_DE_UPLOAD = [
+  "blog",
+  "servicos",
+  "produtos",
+  "galerias",
+  "depoimentos",
+] as const;
+
+export type PastaDeUpload = (typeof PASTAS_DE_UPLOAD)[number];
+
 /** Aceita só caminho local: com barra inicial, sem "//" (URL externa) nem "..". */
 export function ehCaminhoDeImagem(valor: string): valor is CaminhoDeImagem {
   return valor.startsWith("/") && !valor.startsWith("//") && !valor.includes("..");

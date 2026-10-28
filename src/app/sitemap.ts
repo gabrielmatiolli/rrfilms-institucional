@@ -3,12 +3,18 @@ import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
 import { slugsPublicados } from "@/lib/dados/blog";
 import { produtosComPagina } from "@/lib/dados/produtos";
+import { servicosComPagina } from "@/lib/dados/servicos";
 
 /**
- * As páginas fixas mais o que o painel publicou: artigos com status PUBLICADO e
- * linhas com página própria. Artigo sem corpo continua fora do índice — quem
- * decide isso é o `robots` da própria página.
+ * As páginas fixas mais o que o painel publicou: artigos com status PUBLICADO,
+ * serviços com interna própria e linhas com página própria. Artigo sem corpo
+ * continua fora do índice — quem decide isso é o `robots` da própria página.
+ *
+ * Dinâmico pelo mesmo motivo do layout de `(site)`: pré-renderizado no build,
+ * o sitemap congelaria na lista de artigos que existia naquele dia.
  */
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const fixas: { caminho: string; prioridade: number }[] = [
     { caminho: "", prioridade: 1 },
@@ -24,9 +30,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // O sitemap não pode derrubar a resposta se o banco estiver fora do ar.
-  const [posts, produtos] = await Promise.all([
+  const [posts, produtos, servicos] = await Promise.all([
     slugsPublicados().catch(() => []),
     produtosComPagina().catch(() => []),
+    servicosComPagina().catch(() => []),
   ]);
 
   return [
@@ -35,6 +42,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: prioridade,
+    })),
+    ...servicos.map((servico) => ({
+      url: `${site.url}/servicos/${servico.slug}`,
+      lastModified: servico.atualizadoEm,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
     })),
     ...produtos.map((produto) => ({
       url: `${site.url}/produtos/${produto.slug}`,

@@ -14,10 +14,11 @@ import {
   type FotoDeBloco,
 } from "@/lib/admin/blocos";
 import { cn } from "@/lib/utils";
+import type { PastaDeUpload } from "@/lib/imagens";
 
 interface Props {
   bloco: Bloco;
-  pasta: "blog" | "produtos";
+  pasta: PastaDeUpload;
   atualizar: (chave: string, valor: string) => void;
 }
 

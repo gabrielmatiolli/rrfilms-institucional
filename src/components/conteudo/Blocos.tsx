@@ -180,8 +180,15 @@ function UmBloco({ bloco }: { bloco: Bloco }) {
   }
 }
 
-/** Usado quando um post/produto ainda não tem corpo montado no painel. */
-export function SemConteudo() {
+/**
+ * Usado quando um post, serviço ou produto ainda não tem corpo montado no
+ * painel. `voltar` é o link secundário — a listagem de onde o leitor veio.
+ */
+export function SemConteudo({
+  voltar = { href: "/blog", rotulo: "Voltar ao blog" },
+}: {
+  voltar?: { href: string; rotulo: string };
+}) {
   return (
     <div className="w-full rounded-2xl border border-vidro-borda bg-vidro-preenchimento p-8 vidro-02">
       <h2 className="t-h5">Texto em produção</h2>
@@ -194,10 +201,10 @@ export function SemConteudo() {
           Agendar medição
         </BotaoLink>
         <Link
-          href="/blog"
+          href={voltar.href}
           className="inline-flex min-h-[44px] items-center rounded-pill px-4 t-botao-m text-texto-forte underline-offset-4 hover:underline"
         >
-          Voltar ao blog
+          {voltar.rotulo}
         </Link>
       </div>
     </div>
