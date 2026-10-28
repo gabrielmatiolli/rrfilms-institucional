@@ -151,6 +151,91 @@ que só sobrevive o que o decodificador entende como imagem — um arquivo com
 payload disfarçado de `.jpg` não chega ao disco. O `type` que o navegador manda
 é tratado como dica, não como prova.
 
+## Mensuração (Google Tag Manager)
+
+**Toda a mensuração mora no GTM** (`NEXT_PUBLIC_GTM_ID`). GA4, Pixel da Meta e
+Google Ads são tags dentro do contêiner, administradas pela agência. O site
+**não** carrega `gtag.js` nem `fbevents.js` e não chama `gtag()`/`fbq()` para
+medir — fazer isso em paralelo ao GTM duplicava as contagens. Variáveis antigas
+(`NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_GOOGLE_ADS_ID`, `NEXT_PUBLIC_META_PIXEL_ID`,
+`NEXT_PUBLIC_GOOGLE_ADS_CONVERSAO`) não são mais lidas.
+
+`src/components/layout/TagsDeMedicao.tsx` confere o ID e o ambiente;
+`CarregadorDeTags.tsx` injeta o script `tags-de-medicao`: dataLayer, Consent
+Mode v2 e o snippet do GTM.
+
+- **Nada carrega antes do aceite** no aviso de cookies (`AvisoDeCookies.tsx`).
+  A escolha fica no `localStorage` (`rr_consentimento`). "Recusar" depois de
+  aceitar manda `consent update` negado e `fbq('consent','revoke')` para as tags
+  que o GTM já carregou, e apaga os cookies delas. Ao aceitar, o dataLayer
+  recebe `consentimento_aceito`.
+- **Nada é enviado em `npm run dev`.** Para conferir na sua máquina, use o
+  build de produção (`npm run build` + `npm start`).
+- **Sem `<noscript>` do GTM**: sem JavaScript não há como pedir consentimento.
+- **Troca de página**: o site é Next.js, a navegação não recarrega a página.
+  No GTM, as tags de página vista (GA4 e Meta PageView) precisam do acionador
+  "Alteração no histórico", além do carregamento inicial.
+- Políticas em `/politica-de-privacidade` e `/politica-de-cookies` — **se uma
+  ferramenta nova entrar pelo GTM, ela precisa entrar na tabela da política de
+  cookies**.
+
+## Pedidos de orçamento e conversões
+
+Os formulários de `/contato` e `/para-empresas` usam
+`src/components/formularios/FormularioDeOrcamento.tsx`, que envia pela Server
+Action `src/lib/pedidos/acoes.ts`:
+
+1. valida os campos (`src/lib/pedidos/esquema.ts`);
+2. filtra robô sem captcha — campo-isca invisível, tempo mínimo de 3 s entre
+   abrir a página e enviar, e no máximo 5 pedidos por IP por hora;
+3. salva em `PedidoDeOrcamento` — aparece em **`/admin/pedidos`**, com status
+   (novo, em atendimento, fechado, descartado) e exclusão para pedido de LGPD;
+4. responde ao visitante e, **depois** da resposta, manda o aviso por e-mail
+   para a equipe (`src/lib/pedidos/email.ts`, via SMTP). Se o e-mail falhar o
+   pedido continua salvo, marcado "Sem aviso por e-mail" no painel.
+
+Só depois que o servidor confirma o pedido salvo, e só se o visitante aceitou
+os cookies, o navegador empurra no dataLayer (`src/lib/conversao.ts`):
+
+| Evento | Parâmetros | Quando |
+| --- | --- | --- |
+| `generate_lead` | `formulario`: `contato` ou `empresas` | pedido de orçamento salvo |
+| `clique_contato` | `canal`: `whatsapp`, `telefone` ou `email`; `local`: caminho da página | clique em link de contato em qualquer página (`RastreioDeContato.tsx`) |
+
+As tags do GTM (conversão do GA4, Lead da Meta, conversão do Google Ads)
+usam esses eventos como acionador "Evento personalizado". Nenhum dado pessoal
+vai no dataLayer.
+
+## Dependências e segurança
+
+O `npm audit` precisa ficar limpo. O que não dá para resolver só subindo versão
+está preso em `overrides` no `package.json`:
+
+| Pacote | Preso por | Forçado para | Motivo |
+| --- | --- | --- | --- |
+| `mariadb` | `@prisma/adapter-mariadb` (pino exato `3.4.5`) | `3.4.7` | CVE-2026-55215, 55854 e 55855 |
+| `mysql2` | `prisma` (pino exato `3.15.3`) | `^3.24.5` | GHSA-3f6p-5ww8-9rcr e rgwj-5xj2-c3m3 |
+| `deepmerge-ts` | `@prisma/config` (pino exato `7.1.5`) | `^8.0.2` | CVE-2026-40345 (a 7.1.6 ainda está na faixa do aviso) |
+
+Cada override é escopado a quem pede o pacote, para não mexer no resto da
+árvore. O Prisma 7.10.0 é o último estável e fixa essas versões exatas; quando
+sair uma release do Prisma com elas atualizadas, **remova os overrides e
+confira com `npm audit`** — override esquecido segura versão antiga depois que
+o problema já foi resolvido na origem.
+
+Ao mexer nos overrides, vale repetir o que foi verificado aqui: `npx prisma
+validate`, `generate` e `migrate status` (exercitam o `@prisma/config`), uma
+consulta real pelo adaptador — de preferência com `contains` e acento, que é o
+caso que o `useTextProtocol` cobre — e `npm ci --dry-run`, porque o deploy da
+Hostinger instala pelo lockfile.
+
+Fica um aviso em aberto, de propósito: **`braces`**, puxado por
+`eslint-config-next → @next/eslint-plugin-next → fast-glob → micromatch`. A
+3.0.3 instalada é a última publicada, não existe correção; o "conserto" que o
+npm propõe é voltar o `eslint-config-next` para a 14, dois majors atrás. É
+ferramenta de desenvolvimento, lendo os caminhos do próprio projeto, e não vai
+para o navegador nem atende request em produção.
+
 ## Deploy na Hostinger
 
 Mesmo processo do site da Multipatas: app **Node.js** na Hostinger, enviado como
@@ -334,5 +419,6 @@ Resolvidas pelo painel, sem deploy:
 Ainda dependem de código ou de material:
 
 - Chaves reais do hCaptcha (hoje o `.env` usa as de teste).
-- Endpoint dos formulários de contato, orçamento corporativo e newsletter.
+- Envio da newsletter do blog (os formulários de orçamento já enviam — ver
+  "Pedidos de orçamento e conversões").
 - Ficha técnica em PDF para o botão "Baixar ficha em PDF".

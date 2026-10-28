@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
 
+import { FormularioDeOrcamento } from "@/components/formularios/FormularioDeOrcamento";
 import { HeroSimples } from "@/components/sections/Heros";
-import { Botao } from "@/components/ui/Botao";
 import { ListaDeFaq } from "@/components/ui/Faq";
-import {
-  AreaDeTexto,
-  Campo,
-  Checkbox,
-  Selecao,
-} from "@/components/ui/Formulario";
 import {
   IconeEmail,
   IconePin,
@@ -138,59 +132,9 @@ export default async function Contato() {
             <p className="t-sobrancelha text-texto-acento">Orçamento sem custo</p>
             <h2 className="mt-3 t-h4">Formulário de orçamento</h2>
 
-            <form className="mt-8 flex flex-col gap-6">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Campo
-                  id="nome"
-                  rotulo="Nome"
-                  placeholder="Como podemos te chamar"
-                  autoComplete="name"
-                  required
-                />
-                <Campo
-                  id="whatsapp"
-                  rotulo="WhatsApp"
-                  type="tel"
-                  placeholder="(11) 90000-0000"
-                  autoComplete="tel"
-                  required
-                />
-              </div>
-
-              <Campo
-                id="email"
-                rotulo="E-mail"
-                type="email"
-                placeholder="voce@email.com.br"
-                ajuda="Usamos só para retornar o orçamento."
-                autoComplete="email"
-                required
-              />
-
-              <Selecao
-                id="tipo-de-imovel"
-                rotulo="Tipo de imóvel"
-                opcoes={tiposDeImovel}
-              />
-
-              <AreaDeTexto
-                id="sobre-o-vidro"
-                rotulo="Conte do seu vidro"
-                rows={5}
-                placeholder="Quantas janelas, para onde estão viradas, qual o problema — calor, claridade, privacidade ou segurança."
-                ajuda="Quanto mais detalhe, mais preciso o orçamento."
-              />
-
-              <Checkbox
-                id="consentimento"
-                rotulo="Aceito receber o orçamento por WhatsApp"
-                defaultChecked
-              />
-
-              <Botao type="submit" className="w-full sm:w-fit">
-                Enviar e receber orçamento
-              </Botao>
-            </form>
+            <div className="mt-8">
+              <FormularioDeOrcamento origem="contato" tiposDeImovel={tiposDeImovel} />
+            </div>
           </div>
 
           {/* Mapa: por último no celular; embaixo dos canais no lg */}

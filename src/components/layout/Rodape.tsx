@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Assinatura } from "@/components/brand/Marca";
+import { LinkDePreferenciasDeCookies } from "@/components/layout/AvisoDeCookies";
 import {
   IconeEmail,
   IconePin,
@@ -146,7 +147,16 @@ export function Rodape({ contato }: { contato: ContatoDoSite }) {
             © {new Date().getFullYear()} {site.nome}® · {site.complemento} Desde{" "}
             {site.fundacao}. CNPJ {contato.cnpj}.
           </p>
-          <p className="shrink-0">{site.identidade}</p>
+          <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2">
+            <Link href="/politica-de-privacidade" className="underline underline-offset-4 transition-opacity hover:opacity-65">
+              Privacidade
+            </Link>
+            <Link href="/politica-de-cookies" className="underline underline-offset-4 transition-opacity hover:opacity-65">
+              Cookies
+            </Link>
+            <LinkDePreferenciasDeCookies />
+            <p>{site.identidade}</p>
+          </div>
         </div>
       </div>
     </footer>

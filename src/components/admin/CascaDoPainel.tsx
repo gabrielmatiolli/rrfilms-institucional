@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 const ITENS = [
   { rotulo: "Painel", href: "/admin" },
+  { rotulo: "Pedidos", href: "/admin/pedidos" },
   { rotulo: "Blog", href: "/admin/blog" },
   { rotulo: "Serviços", href: "/admin/servicos" },
   { rotulo: "Produtos", href: "/admin/produtos" },

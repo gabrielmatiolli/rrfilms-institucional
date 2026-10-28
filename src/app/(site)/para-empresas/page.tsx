@@ -5,13 +5,13 @@ import {
   Depoimento,
   type ServicoDeCard,
 } from "@/components/cards/Cartoes";
+import { FormularioDeOrcamento } from "@/components/formularios/FormularioDeOrcamento";
 import { FaixaDeCta } from "@/components/sections/FaixaDeCta";
 import { Galeria } from "@/components/sections/Galeria";
 import { HeroDividido } from "@/components/sections/Heros";
-import { Botao, BotaoLink } from "@/components/ui/Botao";
+import { BotaoLink } from "@/components/ui/Botao";
 import { CardDeBeneficio, ChipDeVidroLink } from "@/components/ui/Elementos";
 import { Foto } from "@/components/ui/Foto";
-import { Campo, Checkbox, Selecao } from "@/components/ui/Formulario";
 import { CabecalhoDeSecao, Secao } from "@/components/ui/Secao";
 import { galeriaPorChave } from "@/lib/dados/galerias";
 import { fotos } from "@/content/fotos";
@@ -215,38 +215,7 @@ export default async function ParaEmpresas() {
             </p>
           </div>
 
-          <form className="flex flex-col gap-5" action="/contato" method="get">
-            <Campo
-              id="empresa"
-              rotulo="Empresa"
-              placeholder="Razão social"
-              autoComplete="organization"
-              required
-            />
-            <Campo
-              id="email-corporativo"
-              rotulo="E-mail corporativo"
-              type="email"
-              placeholder="voce@empresa.com.br"
-              ajuda="Usamos só para retornar o orçamento."
-              autoComplete="email"
-              required
-            />
-            <Selecao
-              id="metragem"
-              rotulo="Metragem aproximada de vidro"
-              ajuda="Se não souber, a gente mede na visita."
-              opcoes={faixasDeMetragem}
-            />
-            <Checkbox
-              id="consentimento-corporativo"
-              rotulo="Aceito receber o orçamento por WhatsApp"
-              defaultChecked
-            />
-            <Botao type="submit" className="w-full sm:w-fit">
-              Solicitar simulação
-            </Botao>
-          </form>
+          <FormularioDeOrcamento origem="empresas" faixasDeMetragem={faixasDeMetragem} />
         </div>
       </Secao>
 

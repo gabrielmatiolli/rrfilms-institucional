@@ -276,6 +276,54 @@ model ConfiguracaoSite {
 }
 
 // ---------------------------------------------------------------------------
+// Pedidos de orçamento (formulários do site)
+// ---------------------------------------------------------------------------
+
+/// De qual formulário o pedido veio.
+enum OrigemDoPedido {
+  /** /contato — orçamento de casa, apartamento, loja… */
+  CONTATO
+  /** /para-empresas — orçamento corporativo, por metragem. */
+  EMPRESAS
+}
+
+/// Andamento do pedido no comercial, marcado à mão no painel.
+enum StatusDoPedido {
+  NOVO
+  EM_ATENDIMENTO
+  FECHADO
+  DESCARTADO
+}
+
+/// Pedido enviado por um formulário de orçamento do site. Fica salvo antes de
+/// qualquer outra coisa: o e-mail para a equipe é um aviso, e se o servidor de
+/// e-mail falhar o pedido continua no painel (emailEnviado = false).
+model PedidoDeOrcamento {
+  id        String         @id @default(cuid())
+  origem    OrigemDoPedido
+  status    StatusDoPedido @default(NOVO)
+
+  /// Nome da pessoa (contato) ou razão social (empresas).
+  nome      String
+  email     String
+  whatsapp  String
+  /// Tipo de imóvel (contato) ou faixa de metragem (empresas).
+  detalhe   String?
+  mensagem  String?        @db.Text
+  aceitaWhatsapp Boolean
+
+  /// Só para o limite de envios por IP — ver src/lib/pedidos/acoes.ts.
+  ip        String
+  emailEnviado Boolean     @default(false)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([status, criadoEm])
+  @@index([ip, criadoEm])
+}
+
+// ---------------------------------------------------------------------------
 // Nota sobre defaults em TEXT e JSON
 // ---------------------------------------------------------------------------
 //

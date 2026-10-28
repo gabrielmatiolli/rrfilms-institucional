@@ -19,6 +19,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { caminho: "/contato", prioridade: 0.8 },
     { caminho: "/a-marca", prioridade: 0.6 },
     { caminho: "/blog", prioridade: 0.6 },
+    { caminho: "/politica-de-privacidade", prioridade: 0.2 },
+    { caminho: "/politica-de-cookies", prioridade: 0.2 },
   ];
 
   // O sitemap não pode derrubar a resposta se o banco estiver fora do ar.

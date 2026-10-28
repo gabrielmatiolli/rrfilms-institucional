@@ -1,10 +1,17 @@
+import { AvisoDeCookies } from "@/components/layout/AvisoDeCookies";
 import { FabWhatsapp } from "@/components/layout/FabWhatsapp";
 import { Navbar } from "@/components/layout/Navbar";
+import { RastreioDeContato } from "@/components/layout/RastreioDeContato";
 import { Rodape } from "@/components/layout/Rodape";
+import { TagsDeMedicao } from "@/components/layout/TagsDeMedicao";
 import { contatoDoSite } from "@/lib/dados/configuracao";
 
 /**
  * A moldura do site público. O painel em /admin não passa por aqui.
+ *
+ * As tags de medição (GTM, Google, Meta) e o aviso de cookies ficam aqui, e não
+ * no layout raiz, para o /admin não virar visita nos relatórios. As tags só
+ * carregam depois do aceite — ver TagsDeMedicao.
  *
  * Os dados de contato são lidos uma vez e descem por prop: a Navbar é Client
  * Component (menu e scroll) e não pode consultar o banco por conta própria.
@@ -26,6 +33,9 @@ export default async function SiteLayout({
       <main id="conteudo">{children}</main>
       <Rodape contato={contato} />
       <FabWhatsapp whatsapp={contato.whatsapp} />
+      <AvisoDeCookies />
+      <TagsDeMedicao />
+      <RastreioDeContato />
     </>
   );
 }

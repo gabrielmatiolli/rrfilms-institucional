@@ -9,6 +9,7 @@ import { tempoRelativo } from "@/lib/datas";
 export const metadata: Metadata = { title: "Painel" };
 
 const ATALHOS = [
+  { href: "/admin/pedidos", titulo: "Pedidos", descricao: "Orçamentos que chegaram pelo site" },
   { href: "/admin/blog", titulo: "Blog", descricao: "Escrever e publicar artigos" },
   { href: "/admin/servicos", titulo: "Serviços", descricao: "A grade da página de Serviços" },
   { href: "/admin/produtos", titulo: "Produtos", descricao: "As linhas de película" },
@@ -21,6 +22,7 @@ export default async function Painel() {
   const admin = await exigirAdmin("/admin");
 
   const [
+    pedidosNovos,
     postsPublicados,
     rascunhos,
     servicosAtivos,
@@ -30,6 +32,7 @@ export default async function Painel() {
     depoimentosSemAutorizacao,
     atividade,
   ] = await Promise.all([
+    prisma.pedidoDeOrcamento.count({ where: { status: "NOVO" } }),
     prisma.blogPost.count({ where: { status: "PUBLICADO" } }),
     prisma.blogPost.count({ where: { status: "RASCUNHO" } }),
     prisma.servico.count({ where: { ativo: true } }),
@@ -41,6 +44,7 @@ export default async function Painel() {
   ]);
 
   const numeros = [
+    { valor: pedidosNovos, rotulo: "pedidos novos", href: "/admin/pedidos?status=NOVO" },
     { valor: postsPublicados, rotulo: "artigos no ar", href: "/admin/blog" },
     { valor: rascunhos, rotulo: "rascunhos", href: "/admin/blog" },
     { valor: servicosAtivos, rotulo: "serviços no site", href: "/admin/servicos" },
@@ -77,10 +81,24 @@ export default async function Painel() {
         ))}
       </ul>
 
-      {(rascunhos > 0 || depoimentosSemAutorizacao > 0) && (
+      {(pedidosNovos > 0 || rascunhos > 0 || depoimentosSemAutorizacao > 0) && (
         <Cartao>
           <TituloDeBloco>Pendências</TituloDeBloco>
           <ul className="flex flex-col gap-2.5">
+            {pedidosNovos > 0 && (
+              <li className="flex flex-wrap items-center gap-2 text-[13.5px] text-texto-corpo">
+                <Selo tom="atencao">Pedidos</Selo>
+                {pedidosNovos === 1
+                  ? "Um pedido de orçamento ainda não foi atendido."
+                  : `${pedidosNovos} pedidos de orçamento ainda não foram atendidos.`}
+                <Link
+                  href="/admin/pedidos?status=NOVO"
+                  className="font-semibold text-texto-forte underline-offset-4 hover:underline"
+                >
+                  Ver
+                </Link>
+              </li>
+            )}
             {rascunhos > 0 && (
               <li className="flex flex-wrap items-center gap-2 text-[13.5px] text-texto-corpo">
                 <Selo tom="atencao">Blog</Selo>
