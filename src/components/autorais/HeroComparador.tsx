@@ -11,8 +11,12 @@ import { IconeSetaDireita } from "@/components/ui/Icone";
  * para o efeito de aplicação da película não passar por cima dela.
  *
  * Arrastar o rodo "aplica" a película sobre a cena: à esquerda da aresta fica a
- * lâmina aplicada (texto nítido, tingido de Conforto, 28 °C) e à direita, o vidro
- * nu (texto lavado, borrado, 41 °C). É o gesto do próprio produto.
+ * lâmina aplicada (texto nítido, tingido de Conforto) e à direita, o vidro nu
+ * (texto lavado, borrado). É o gesto do próprio produto.
+ *
+ * Sem número de temperatura: a revisão de copy de 28/10/2026 tirou do site os
+ * "41 °C / 28 °C" por não haver medição documentada. O indicador continua, em
+ * palavra — o que ele mostra é a diferença, não um valor aferido.
  *
  * Pensado primeiro para o toque: o gesto horizontal em qualquer ponto do herói
  * passa o rodo — como limpar a tela do celular — e o gesto vertical continua
@@ -101,13 +105,17 @@ function Cena({ aplicada }: { aplicada: boolean }) {
             }`}
           >
             {aplicada
-              ? "Película aplicada · 28 °C no vidro"
-              : "Sem película · 41 °C no vidro"}
+              ? "Película aplicada · o vidro para de esquentar"
+              : "Sem película · o vidro esquenta a tarde inteira"}
           </p>
           <h1 className="t-display-l" style={aplicada ? undefined : { filter: "blur(1.5px)" }}>
-            {TITULO.map((linha) => (
+            {TITULO.map((linha, i) => (
               <span key={linha} className="block">
                 {linha}
+                {/* O espaço separa as duas frases no texto do H1: sem ele, o
+                    título vira "…no vidro.A luz…" para buscador e leitor de
+                    tela, mesmo aparecendo certo na tela. */}
+                {i < TITULO.length - 1 ? " " : null}
               </span>
             ))}
           </h1>
@@ -150,8 +158,11 @@ export function HeroComparador() {
     null,
   );
 
-  // O termômetro anda de 41 °C (vidro nu) a 28 °C (película aplicada).
-  const temperatura = Math.round(41 - (aplicacao / 100) * 13);
+  // O indicador anda de "muito calor" (vidro nu) a "pouco calor" (aplicada).
+  // Escala relativa, sem grau: não há medição documentada para publicar número.
+  const calor = 100 - aplicacao;
+  const leituraDeCalor =
+    calor > 66 ? "muito calor" : calor > 33 ? "menos calor" : "pouco calor";
 
   const posicionar = (clientX: number) => {
     const caixa = secao.current?.getBoundingClientRect();
@@ -189,7 +200,17 @@ export function HeroComparador() {
   };
 
   const aoSoltar = (e: React.PointerEvent<HTMLElement>) => {
-    if (gesto.current?.id !== e.pointerId) return;
+    const g = gesto.current;
+    if (g?.id !== e.pointerId) return;
+
+    // No toque a instrução diz "Toque para ver a película aplicada", então o
+    // toque sem arrasto precisa funcionar: alterna entre vidro nu e aplicada.
+    // Com mouse não: ali a instrução é "Arraste", e um clique solto no herói
+    // virando a cena inteira surpreenderia.
+    if (!g.ativo && e.pointerType !== "mouse") {
+      setAplicacao((v) => (v > 50 ? 0 : 100));
+    }
+
     gesto.current = null;
     setArrastando(false);
   };
@@ -238,7 +259,7 @@ export function HeroComparador() {
           step={5}
           value={aplicacao}
           onChange={(e) => setAplicacao(Number(e.target.value))}
-          aria-valuetext={`${aplicacao}% aplicada, ${temperatura} graus no vidro`}
+          aria-valuetext={`${aplicacao}% aplicada, ${leituraDeCalor} no vidro`}
           className="peer sr-only"
         />
         <span
@@ -247,11 +268,23 @@ export function HeroComparador() {
             arrastando ? "" : "transition-[margin] duration-300 ease-out"
           }`}
           style={{
-            marginInlineStart: `clamp(24px, ${aplicacao}%, calc(100% - 232px))`,
+            // A instrução ficou mais longa, então a pílula é mais larga: o teto
+            // do clamp cresce junto para ela não sangrar pela direita. Em tela
+            // estreita o teto fica abaixo do piso e o clamp devolve o piso — a
+            // pílula para de acompanhar o arrasto, e quem mostra a posição é a
+            // aresta branca do rodo.
+            marginInlineStart: `clamp(24px, ${aplicacao}%, calc(100% - 340px))`,
           }}
         >
           <IconeSetaDireita tamanho={18} />
-          <span className="t-botao-m whitespace-nowrap">Arraste para aplicar</span>
+          {/* Uma instrução só: a do ponteiro em uso. As duas juntas é o que a
+              revisão encontrou colado na tela ("passe o mouseToque…"). */}
+          <span className="t-botao-m whitespace-nowrap pointer-coarse:hidden">
+            Arraste para ver a película aplicada
+          </span>
+          <span className="hidden t-botao-m whitespace-nowrap pointer-coarse:inline">
+            Toque para ver a película aplicada
+          </span>
         </span>
       </div>
 
@@ -263,13 +296,9 @@ export function HeroComparador() {
       >
         <span
           className="block size-2.5 rounded-pill"
-          style={{
-            background: `color-mix(in oklab, #ef5a2e ${Math.round(
-              ((temperatura - 28) / 13) * 100,
-            )}%, #fde084)`,
-          }}
+          style={{ background: `color-mix(in oklab, #ef5a2e ${calor}%, #fde084)` }}
         />
-        <span className="t-botao-m text-texto-forte">{temperatura}°</span>
+        <span className="t-botao-m text-texto-forte">{leituraDeCalor}</span>
         <span className="t-micro text-texto-suave">no vidro</span>
       </p>
 
@@ -279,12 +308,12 @@ export function HeroComparador() {
           <span
             className="absolute inset-x-0 bottom-0 block transition-[height] duration-300"
             style={{
-              height: `${45 + (temperatura - 28) * 3.5}%`,
+              height: `${30 + calor * 0.6}%`,
               background: "linear-gradient(to bottom, #ef5a2e, #fde084)",
             }}
           />
         </div>
-        <p className="mt-2 text-center t-botao-m text-texto-forte">{temperatura}°</p>
+        <p className="mt-2 text-center t-botao-m text-texto-forte">{leituraDeCalor}</p>
         <p className="text-center t-micro text-texto-suave">no vidro</p>
       </div>
     </section>

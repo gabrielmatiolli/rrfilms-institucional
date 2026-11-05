@@ -4,6 +4,7 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import bcrypt from "bcryptjs";
 
 import { urlDoDriver } from "../src/lib/urlDoBanco";
+import { site } from "../src/lib/site";
 import { categorias, depoimentos, galerias, posts, produtos, servicos } from "./dadosIniciais";
 
 /**
@@ -192,17 +193,19 @@ async function semearDepoimentos() {
 }
 
 async function semearConfiguracao() {
+  // Os mesmos valores de src/lib/site.ts, que é o padrão do site quando o banco
+  // ainda não tem a linha (ver src/lib/dados/configuracao.ts).
   const dados = {
-    telefone: "(11) 97374-2600",
-    telefoneLink: "tel:+5511973742600",
-    whatsapp: "https://wa.me/5511973742600",
-    email: "contato@rrfilm.com.br",
-    instagram: "@rrfilmdecor",
-    instagramUrl: "https://www.instagram.com/rrfilmdecor",
-    horario: "Seg a sex, 8h às 18h",
-    atendimento: "Itatiba, SP — atendimento em toda a região",
-    cidade: "Itatiba, SP",
-    cnpj: "00.000.000/0001-00",
+    telefone: site.telefone,
+    telefoneLink: site.telefoneLink,
+    whatsapp: site.whatsapp,
+    email: site.email,
+    instagram: site.instagram,
+    instagramUrl: site.instagramUrl,
+    horario: site.horario,
+    atendimento: site.atendimento,
+    cidade: site.cidade,
+    cnpj: site.cnpj,
   };
 
   await prisma.configuracaoSite.upsert({

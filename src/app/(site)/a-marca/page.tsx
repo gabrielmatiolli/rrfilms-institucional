@@ -3,13 +3,22 @@ import type { Metadata } from "next";
 import { IsotipoDeVidro } from "@/components/brand/IsotipoDeVidro";
 import { FaixaDeCta } from "@/components/sections/FaixaDeCta";
 import { HeroSimples } from "@/components/sections/Heros";
+import { BotaoLink } from "@/components/ui/Botao";
 import { CabecalhoDeSecao, Secao } from "@/components/ui/Secao";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "A marca",
+  title: { absolute: `A marca RR Film: películas para vidro desde ${site.fundacao}` },
   description:
-    "RR vem de Rafael Rela. Desde 1997, tecnologia em películas para vidro com transparência, prova na hora e qualidade acima de fechar a qualquer custo.",
+    "RR vem de Rafael Rela. Desde 1997, a RR Film protege casas e empresas do interior de SP com películas e atendimento transparente.",
+  openGraph: {
+    title: `A marca RR Film: películas para vidro desde ${site.fundacao}`,
+    description:
+      "Em um mercado onde o cliente raramente consegue verificar o que foi instalado, assinar com o próprio nome é um compromisso.",
+    // Foto de obra do acervo. Trocar pela foto real da equipe ou da fachada
+    // da RR Film quando o material chegar.
+    images: ["/fotos/casas-galeria-5.jpg"],
+  },
 };
 
 /** Golden circle: três camadas de vidro, uma sobre a outra, como o símbolo. */
@@ -210,7 +219,7 @@ export default function AMarca() {
       <Secao fundo="sutil">
         <CabecalhoDeSecao
           sobrancelha={`Desde ${site.fundacao}`}
-          titulo="Vinte e nove anos aprendendo com vidro"
+          titulo={`Aprendendo com vidro desde ${site.fundacao}`}
           lead="A RR Film não mudou de nome. Mudou de território — e o nome acompanhou."
           largura="760px"
         />
@@ -261,6 +270,26 @@ export default function AMarca() {
               )}
             </div>
           ))}
+        </div>
+      </Secao>
+
+      {/* Prova — inserido depois dos pilares pela revisão de copy de 28/10/2026:
+          a página falava de propósito e valores sem oferecer nenhuma saída para
+          as obras nem para as linhas de película. */}
+      <Secao fundo="pagina">
+        <div className="flex max-w-[860px] flex-col items-start gap-5">
+          <p className="t-sobrancelha text-texto-acento">Prova</p>
+          <h2 className="t-h2">O que a gente promete, a gente mostra</h2>
+          <p className="t-corpo-g text-texto-suave">
+            Cada indicação da RR Film vem com medição no local e demonstração no seu
+            próprio vidro. Veja algumas obras e conheça as linhas de película.
+          </p>
+          <div className="mt-2 flex w-full flex-col gap-3 *:w-full sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:*:w-auto">
+            <BotaoLink href="/servicos">Ver as linhas de película</BotaoLink>
+            <BotaoLink href="/contato" tipo="vidro">
+              Agendar medição gratuita
+            </BotaoLink>
+          </div>
         </div>
       </Secao>
 

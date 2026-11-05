@@ -1,13 +1,19 @@
+import { COBERTURA, DESDE, LINHAS, MANUTENCAO } from "@/content/linhas";
+
 /**
  * Dados institucionais da RR Film.
- * Os textos vêm do arquivo Figma "RR Films" e do brandbook da MDPL Brands.
+ *
+ * Os textos vêm do arquivo Figma "RR Films", do brandbook da MDPL Brands e da
+ * revisão de copy de 28/10/2026. A idade da empresa nunca aparece em anos
+ * ("29 anos"), sempre como "desde 1997": o número envelhece sozinho e o texto
+ * do site não.
  */
 
 export const site = {
   nome: "RR Film",
   complemento: "Tecnologia em Películas.",
   slogan: "Conforto que você sente.",
-  fundacao: 1997,
+  fundacao: DESDE,
   cidade: "Itatiba, SP",
   url: "https://www.rrfilm.com.br",
   urlCurta: "www.rrfilm.com.br",
@@ -17,47 +23,49 @@ export const site = {
   telefone: "(11) 97374-2600",
   telefoneLink: "tel:+5511973742600",
   whatsapp: "https://wa.me/5511973742600",
-  horario: "Seg a sex, 8h às 18h",
-  atendimento: "Itatiba, SP — atendimento em toda a região",
-  cnpj: "00.000.000/0001-00",
-  identidade: "Identidade por MDPL Brands",
+  horario: "Segunda a sexta, das 8h às 18h",
+  atendimento: `Atendimento em ${COBERTURA}`,
+  cnpj: "60.356.183/0001-04",
+  identidade: "Realizado por: MDPL Brands",
   pilares: ["Conforto", "Segurança", "Privacidade", "Decor"],
 } as const;
 
 // O link do WhatsApp com mensagem pronta mora em src/lib/dados/configuracao.ts:
 // o número é editável pelo painel, e montar o link a partir daqui ignoraria isso.
 
+/**
+ * O submenu de "Serviços": as quatro linhas mais a manutenção, na ordem do
+ * portfólio. Sai de src/content/linhas.ts para o menu, os cards e o rodapé
+ * nunca divergirem de nome ou de URL.
+ */
+export const menuDeServicos = [
+  ...LINHAS.map((linha) => ({ rotulo: linha.nomeCurto, href: linha.url })),
+  { rotulo: MANUTENCAO.nomeCurto, href: MANUTENCAO.url },
+] as const;
+
 export const navegacao = [
-  { rotulo: "Serviços", href: "/servicos" },
+  { rotulo: "Serviços", href: "/servicos", submenu: menuDeServicos },
   { rotulo: "Para casas", href: "/para-casas" },
   { rotulo: "Para empresas", href: "/para-empresas" },
+  { rotulo: "A marca", href: "/a-marca" },
   { rotulo: "Blog", href: "/blog" },
   { rotulo: "Contato", href: "/contato" },
-  { rotulo: "A marca", href: "/a-marca" },
 ] as const;
 
 export const rodape = {
-  descricao:
-    "Tecnologia em películas para vidro, com foco residencial e soluções sob medida para empresas. Diagnóstico no local, instalação própria e garantia.",
+  descricao: `${site.nome} – ${site.complemento} Desde ${DESDE} protegendo casas e empresas do interior de São Paulo com conforto térmico, proteção UV, segurança e privacidade. Medição no local, instalação própria e garantia.`,
   colunas: [
     {
-      titulo: "Serviços",
-      itens: [
-        { rotulo: "Nanocerâmica Ultra HD", href: "/produtos/nanoceramica-ultra-hd" },
-        { rotulo: "Segurança antiestilhaço", href: "/servicos#seguranca" },
-        { rotulo: "Refletiva Black Silver", href: "/servicos#refletiva" },
-        { rotulo: "Decorativa e jateada", href: "/servicos#decorativa" },
-        { rotulo: "Linha Smart", href: "/servicos#smart" },
-        { rotulo: "Manutenção e reposição", href: "/servicos#manutencao" },
-      ],
+      titulo: "Películas",
+      itens: menuDeServicos,
     },
     {
       titulo: "Soluções",
       itens: [
         { rotulo: "Para casas", href: "/para-casas" },
         { rotulo: "Para empresas", href: "/para-empresas" },
-        { rotulo: "Fachadas e retrofit", href: "/para-empresas#solucoes" },
-        { rotulo: "Arquitetos e vidraçarias", href: "/para-empresas#diferenciais" },
+        { rotulo: "Clínicas e consultórios", href: "/para-empresas#clinicas" },
+        { rotulo: "Arquitetos e vidraçarias", href: "/para-empresas#arquitetos" },
       ],
     },
     {
@@ -65,7 +73,7 @@ export const rodape = {
       itens: [
         { rotulo: "A marca", href: "/a-marca" },
         { rotulo: "Blog", href: "/blog" },
-        { rotulo: "Trabalhe conosco", href: "/contato" },
+        { rotulo: "Contato", href: "/contato" },
         { rotulo: "Política de privacidade", href: "/politica-de-privacidade" },
         { rotulo: "Política de cookies", href: "/politica-de-cookies" },
       ],

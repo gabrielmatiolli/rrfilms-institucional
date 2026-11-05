@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { LINHAS, MANUTENCAO } from "@/content/linhas";
 import { site } from "@/lib/site";
 import { slugsPublicados } from "@/lib/dados/blog";
 import { produtosComPagina } from "@/lib/dados/produtos";
@@ -15,11 +16,22 @@ import { servicosComPagina } from "@/lib/dados/servicos";
  */
 export const dynamic = "force-dynamic";
 
+/**
+ * As cinco internas que viraram páginas de código. Uma interna do painel com um
+ * destes slugs não entra no sitemap: a rota estática é que responde a URL, e a
+ * entrada do painel sairia duplicada.
+ */
+const CODIFICADAS = new Set([
+  ...LINHAS.map((linha) => linha.slug),
+  MANUTENCAO.slug,
+]);
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const fixas: { caminho: string; prioridade: number }[] = [
     { caminho: "", prioridade: 1 },
     { caminho: "/servicos", prioridade: 0.9 },
-    { caminho: "/produtos/nanoceramica-ultra-hd", prioridade: 0.9 },
+    ...LINHAS.map((linha) => ({ caminho: linha.url, prioridade: 0.9 })),
+    { caminho: MANUTENCAO.url, prioridade: 0.7 },
     { caminho: "/para-casas", prioridade: 0.9 },
     { caminho: "/para-empresas", prioridade: 0.9 },
     { caminho: "/contato", prioridade: 0.8 },
@@ -43,12 +55,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: prioridade,
     })),
-    ...servicos.map((servico) => ({
-      url: `${site.url}/servicos/${servico.slug}`,
-      lastModified: servico.atualizadoEm,
-      changeFrequency: "monthly" as const,
-      priority: 0.8,
-    })),
+    ...servicos
+      .filter((servico) => !CODIFICADAS.has(servico.slug))
+      .map((servico) => ({
+        url: `${site.url}/servicos/${servico.slug}`,
+        lastModified: servico.atualizadoEm,
+        changeFrequency: "monthly" as const,
+        priority: 0.8,
+      })),
     ...produtos.map((produto) => ({
       url: `${site.url}/produtos/${produto.slug}`,
       lastModified: produto.atualizadoEm,

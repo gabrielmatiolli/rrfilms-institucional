@@ -144,16 +144,10 @@ export function Rodape({ contato }: { contato: ContatoDoSite }) {
       <div className="border-t border-white/12">
         <div className="conteudo flex flex-col gap-2 pb-8 pt-6 t-micro sm:flex-row sm:items-center sm:gap-6">
           <p className="flex-1">
-            © {new Date().getFullYear()} {site.nome}® · {site.complemento} Desde{" "}
-            {site.fundacao}. CNPJ {contato.cnpj}.
+            © {new Date().getFullYear()} {site.nome}® · Desde {site.fundacao} · CNPJ{" "}
+            {contato.cnpj}
           </p>
           <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2">
-            <Link href="/politica-de-privacidade" className="underline underline-offset-4 transition-opacity hover:opacity-65">
-              Privacidade
-            </Link>
-            <Link href="/politica-de-cookies" className="underline underline-offset-4 transition-opacity hover:opacity-65">
-              Cookies
-            </Link>
             <LinkDePreferenciasDeCookies />
             <p>{site.identidade}</p>
           </div>

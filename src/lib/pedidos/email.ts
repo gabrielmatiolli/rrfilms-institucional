@@ -24,7 +24,10 @@ function configuracao() {
   return { host, porta, usuario, senha };
 }
 
-const ROTULO_DO_DETALHE = { CONTATO: "Tipo de imóvel", EMPRESAS: "Metragem de vidro" } as const;
+const ROTULO_DO_PUBLICO = {
+  CONTATO: "Para onde é a película",
+  EMPRESAS: "Segmento",
+} as const;
 const ROTULO_DA_ORIGEM = { CONTATO: "Contato", EMPRESAS: "Para empresas" } as const;
 
 function escapar(texto: string) {
@@ -48,14 +51,19 @@ export async function avisarPedidoPorEmail(
   const para = process.env.PEDIDOS_EMAIL_PARA?.trim() || destinoPadrao;
   const telefone = formatarTelefone(pedido.whatsapp);
 
-  const linhas: [string, string][] = [
-    [pedido.origem === "EMPRESAS" ? "Empresa" : "Nome", pedido.nome],
-    ["WhatsApp", telefone],
-    ["E-mail", pedido.email],
-    [ROTULO_DO_DETALHE[pedido.origem], pedido.detalhe ?? "Não informado"],
+  // Só o que o cliente preencheu: campo vazio não vira linha "Não informado".
+  const linhas: [string, string][] = [["Nome", pedido.nome]];
+  if (pedido.empresa) linhas.push(["Empresa", pedido.empresa]);
+  linhas.push(["WhatsApp", telefone]);
+  if (pedido.email) linhas.push(["E-mail", pedido.email]);
+  if (pedido.cidade) linhas.push(["Cidade", pedido.cidade]);
+  if (pedido.publico) linhas.push([ROTULO_DO_PUBLICO[pedido.origem], pedido.publico]);
+  if (pedido.interesse) linhas.push(["O que procura", pedido.interesse]);
+  if (pedido.detalhe) linhas.push(["Metragem de vidro", pedido.detalhe]);
+  linhas.push(
     ["Aceita orçamento por WhatsApp", pedido.aceitaWhatsapp ? "Sim" : "Não"],
     ["Recebido em", dataEHora(pedido.criadoEm)],
-  ];
+  );
   if (pedido.mensagem) linhas.push(["Sobre o vidro", pedido.mensagem]);
 
   const texto = [
@@ -96,9 +104,11 @@ export async function avisarPedidoPorEmail(
     await transporte.sendMail({
       from: `"Site ${site.nome}" <${smtp.usuario}>`,
       to: para,
-      // "Responder" no e-mail vai direto para o cliente.
-      replyTo: pedido.email,
-      subject: `Novo pedido de orçamento: ${pedido.nome}`,
+      // "Responder" vai direto para o cliente — quando ele deixou e-mail. O
+      // campo é opcional desde a revisão de copy: sem ele, a resposta é pelo
+      // WhatsApp, cujo link está no corpo da mensagem.
+      replyTo: pedido.email ?? undefined,
+      subject: `Novo pedido de orçamento: ${pedido.empresa ?? pedido.nome}`,
       text: texto,
       html,
     });

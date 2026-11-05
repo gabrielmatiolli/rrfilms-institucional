@@ -23,7 +23,13 @@ export function RastreioDeContato() {
       const link = (evento.target as Element | null)?.closest?.("a[href]");
       if (!(link instanceof HTMLAnchorElement)) return;
       const canal = canalDoLink(link.getAttribute("href") ?? "");
-      if (canal) registrarCliqueDeContato(canal, window.location.pathname);
+      if (!canal) return;
+
+      // Classificação do próprio botão, quando ele tem (ver BotaoDeWhatsapp).
+      registrarCliqueDeContato(canal, window.location.pathname, {
+        produto: link.dataset.produto,
+        publico: link.dataset.publico,
+      });
     }
 
     // Fase de captura: conta mesmo se algum componente parar a propagação.

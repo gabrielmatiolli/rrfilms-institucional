@@ -314,11 +314,20 @@ model PedidoDeOrcamento {
   origem    OrigemDoPedido
   status    StatusDoPedido @default(NOVO)
 
-  /// Nome da pessoa (contato) ou razão social (empresas).
+  /// Nome da pessoa que enviou, nos dois formulários.
   nome      String
-  email     String
+  /// Razão social — só no formulário corporativo de /para-empresas.
+  empresa   String?
+  /// Opcional desde a revisão de copy de 28/10/2026: o retorno é por WhatsApp.
+  email     String?
   whatsapp  String
-  /// Tipo de imóvel (contato) ou faixa de metragem (empresas).
+  /// Cidade do vidro. Obrigatória nos dois formulários.
+  cidade    String?
+  /// "Para onde é a película?" (contato) ou o segmento da empresa (empresas).
+  publico   String?
+  /// "O que você procura?" — só em /contato.
+  interesse String?
+  /// Faixa de metragem de vidro (empresas).
   detalhe   String?
   mensagem  String?        @db.Text
   aceitaWhatsapp Boolean

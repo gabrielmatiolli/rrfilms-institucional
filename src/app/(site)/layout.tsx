@@ -4,7 +4,9 @@ import { Navbar } from "@/components/layout/Navbar";
 import { RastreioDeContato } from "@/components/layout/RastreioDeContato";
 import { Rodape } from "@/components/layout/Rodape";
 import { TagsDeMedicao } from "@/components/layout/TagsDeMedicao";
+import { DadosEstruturados } from "@/components/conteudo/DadosEstruturados";
 import { contatoDoSite } from "@/lib/dados/configuracao";
+import { esquemaDeNegocio } from "@/lib/schema";
 
 /**
  * Todo o conteúdo do site público sai do banco, e quem edita é o painel.
@@ -37,6 +39,10 @@ export default async function SiteLayout({
 
   return (
     <>
+      {/* LocalBusiness no site todo: endereço, telefone e área de atendimento
+          saem de um lugar só, e as páginas acrescentam Service, FAQPage e
+          BreadcrumbList por cima. */}
+      <DadosEstruturados dados={esquemaDeNegocio(contato)} />
       <a
         href="#conteudo"
         className="sr-only t-botao-m focus:not-sr-only focus:fixed focus:left-6 focus:top-6 focus:z-[60] focus:rounded-pill focus:bg-acao-primaria focus:px-6 focus:py-3 focus:text-acao-sobre-primaria"

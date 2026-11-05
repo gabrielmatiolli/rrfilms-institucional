@@ -37,7 +37,13 @@ export type ServicoDeCard = {
   /** Caminho da imagem. Vazio desenha o card sem foto. */
   foto: CaminhoDeImagem | "";
   dados?: { valor: string; rotulo: string }[];
+  /** Alt da foto: ambiente + película + cidade. */
+  legendaDaFoto?: string;
+  /** "Indicada para" — o público da linha, na grade de /servicos. */
+  publico?: string;
   href: string;
+  /** O padrão é "Ver serviço". As linhas oficiais trazem o rótulo próprio. */
+  rotuloDoLink?: string;
 };
 
 export function CardDeServico({ servico }: { servico: ServicoDeCard }) {
@@ -48,7 +54,7 @@ export function CardDeServico({ servico }: { servico: ServicoDeCard }) {
         {servico.foto && (
           <Image
             src={servico.foto}
-            alt=""
+            alt={servico.legendaDaFoto ?? ""}
             fill
             sizes="(max-width: 768px) 100vw, 410px"
             className="object-cover"
@@ -69,8 +75,8 @@ export function CardDeServico({ servico }: { servico: ServicoDeCard }) {
         <h3 className="t-h4">{servico.titulo}</h3>
         <p className="t-corpo-p text-texto-suave">{servico.descricao}</p>
 
-        {servico.dados && (
-          <div className="flex gap-6 pt-2">
+        {servico.dados && servico.dados.length > 0 && (
+          <div className="flex flex-wrap gap-6 pt-2">
             {servico.dados.map((dado) => (
               <div key={dado.rotulo} className="flex flex-col gap-[2px]">
                 <p className="t-h4">{dado.valor}</p>
@@ -80,8 +86,14 @@ export function CardDeServico({ servico }: { servico: ServicoDeCard }) {
           </div>
         )}
 
+        {servico.publico && (
+          <p className="pt-1 t-micro text-texto-suave">
+            Indicada para: <span className="text-texto-corpo">{servico.publico}</span>
+          </p>
+        )}
+
         <LinkComSeta href={servico.href} className="mt-auto pt-2">
-          Ver serviço
+          {servico.rotuloDoLink ?? "Ver serviço"}
         </LinkComSeta>
       </div>
     </article>
@@ -145,7 +157,6 @@ export type Fala = {
   citacao: string;
   nome: string;
   contexto: string;
-  inicial?: string;
 };
 
 export function Estrelas({ tamanho = 18 }: { tamanho?: number }) {

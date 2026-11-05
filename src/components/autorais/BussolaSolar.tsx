@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { BotaoLink } from "@/components/ui/Botao";
 import { IconeSol } from "@/components/ui/Icone";
+import { NUMEROS } from "@/content/linhas";
 
 /**
  * Bússola solar (Figma nó 58:505).
@@ -77,7 +78,7 @@ const CENARIOS: Record<
     cargaRotulo: "Esquenta pouco",
     carga: 1,
     indicacao: "Refletiva Black Silver",
-    beneficio: "Bloqueia mais de 99% dos raios UV",
+    beneficio: `Bloqueia ${NUMEROS.nanoceramica.uv} dos raios UV`,
     href: "/servicos#refletiva",
   },
 };

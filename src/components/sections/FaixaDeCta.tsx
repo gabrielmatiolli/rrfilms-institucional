@@ -1,28 +1,32 @@
-import { BotaoExterno, BotaoLink } from "@/components/ui/Botao";
-import { IconeWhatsapp } from "@/components/ui/Icone";
-import { contatoDoSite, whatsappCom } from "@/lib/dados/configuracao";
+import { BotaoDeWhatsapp } from "@/components/sections/BotaoDeWhatsapp";
+import { BotaoLink } from "@/components/ui/Botao";
+import { COBERTURA } from "@/content/linhas";
+import type { CodigoDeWhatsapp } from "@/content/whatsapp";
 
 /**
  * Faixa de CTA (Figma nó 30:169).
  *
  * Fechamento de página. Bloco grafite com lâminas de vidro laranja ao fundo — a
- * assinatura visual da marca. Sempre com dois caminhos: orçamento e WhatsApp.
+ * assinatura visual da marca. Sempre com dois caminhos: medição e WhatsApp.
+ *
+ * O WhatsApp entra por código de mensagem, não por texto solto: cada página
+ * fecha com a conversa do seu assunto, e a tabela de códigos da revisão de copy
+ * continua conferível contra o site.
  */
 export async function FaixaDeCta({
   titulo = "Descubra quanto calor o seu vidro deixa entrar",
-  lead = "Medição e orçamento sem custo em Itatiba e região. Campinas e Jundiaí sob consulta.",
-  rotuloPrimario = "Agendar medição",
-  mensagem = "Olá! Quero agendar uma medição gratuita.",
+  lead = `Medição e indicação sem custo em ${COBERTURA}.`,
+  rotuloPrimario = "Agendar medição gratuita",
+  hrefPrimario = "/contato",
+  codigo = "WA-GERAL",
 }: {
   titulo?: string;
   lead?: string;
   rotuloPrimario?: string;
-  mensagem?: string;
+  /** As páginas de público corporativo abrem o formulário já em "Empresa". */
+  hrefPrimario?: string;
+  codigo?: CodigoDeWhatsapp;
 }) {
-  // contatoDoSite e memoizado por request: chamar aqui nao gera consulta
-  // extra nas paginas que ja leram o contato no layout.
-  const contato = await contatoDoSite();
-
   return (
     <section className="secao bg-fundo-pagina">
       <div className="conteudo">
@@ -57,18 +61,10 @@ export async function FaixaDeCta({
 
           {/* Botões de largura inteira no celular */}
           <div className="flex w-full shrink-0 flex-col gap-3 *:w-full sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:*:w-auto">
-            <BotaoLink href="/contato" tipo="secundaria">
+            <BotaoLink href={hrefPrimario} tipo="secundaria">
               {rotuloPrimario}
             </BotaoLink>
-            <BotaoExterno
-              href={whatsappCom(contato.whatsapp, mensagem)}
-              target="_blank"
-              rel="noopener noreferrer"
-              tipo="frescor"
-              icone={<IconeWhatsapp tamanho={20} />}
-            >
-              WhatsApp
-            </BotaoExterno>
+            <BotaoDeWhatsapp codigo={codigo} tipo="frescor" />
           </div>
         </div>
       </div>

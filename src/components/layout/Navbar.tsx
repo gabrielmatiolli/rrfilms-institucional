@@ -5,7 +5,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Assinatura } from "@/components/brand/Marca";
-import { IconeFechar, IconeMenu, IconeSetaDireita, IconeTelefone } from "@/components/ui/Icone";
+import {
+  IconeChevronBaixo,
+  IconeFechar,
+  IconeMenu,
+  IconeSetaDireita,
+  IconeTelefone,
+} from "@/components/ui/Icone";
 import { navegacao, site } from "@/lib/site";
 
 /**
@@ -18,7 +24,27 @@ import { navegacao, site } from "@/lib/site";
  *
  * A página atual é marcada por uma faixa laranja abaixo do rótulo — não por
  * sublinhado, que brigaria com a leitura sobre vidro.
+ *
+ * "Serviços" ganhou submenu com as quatro linhas e a manutenção. No desktop ele
+ * abre no hover do mouse e no foco do teclado, com estado em React — não com
+ * `group-hover:`/`group-focus-within:` no CSS. Duas razões: a classe de abrir
+ * perdia para a de fechar na ordem da folha de estilo (o painel ficava com
+ * `opacity: 0` mesmo com o foco dentro), e com estado dá para marcar
+ * `aria-expanded` de verdade e fechar no Esc.
+ *
+ * O painel continua sempre no DOM, só escondido: conteúdo com `visibility:
+ * hidden` não recebe foco, e o Tab pularia o submenu inteiro.
+ *
+ * No celular não existe hover, então os itens ficam listados abaixo do pai,
+ * recuados.
  */
+
+type ItemDeMenu = (typeof navegacao)[number];
+
+function submenuDe(item: ItemDeMenu) {
+  return "submenu" in item ? item.submenu : undefined;
+}
+
 export function Navbar({
   telefone,
   telefoneLink,
@@ -28,6 +54,8 @@ export function Navbar({
 }) {
   const caminho = usePathname();
   const [aberto, setAberto] = useState(false);
+  /** O href do item de menu com submenu aberto, no desktop. */
+  const [submenu, setSubmenu] = useState<string | null>(null);
   const [caminhoAnterior, setCaminhoAnterior] = useState(caminho);
 
   // Fecha o menu ao trocar de página, ajustando o estado durante o render —
@@ -35,6 +63,7 @@ export function Navbar({
   if (caminho !== caminhoAnterior) {
     setCaminhoAnterior(caminho);
     setAberto(false);
+    setSubmenu(null);
   }
 
   // Trava o scroll enquanto o menu mobile está aberto.
@@ -46,7 +75,7 @@ export function Navbar({
   }, [aberto]);
 
   const ativo = (href: string) =>
-    href === "/" ? caminho === "/" : caminho.startsWith(href);
+    href === "/" ? caminho === "/" : caminho === href || caminho.startsWith(`${href}/`);
 
   return (
     <header className="pointer-events-none fixed inset-x-0 top-0 z-50 px-5 pt-4 md:px-10 md:pt-6">
@@ -63,32 +92,108 @@ export function Navbar({
         </Link>
 
         {/* Links — desktop */}
-        <ul className="hidden min-w-0 flex-1 items-center justify-center gap-[30px] lg:flex">
-          {navegacao.map((item) => (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                aria-current={ativo(item.href) ? "page" : undefined}
-                className="flex flex-col items-center gap-[7px] pt-1"
+        <ul className="hidden min-w-0 flex-1 items-center justify-center gap-[26px] lg:flex">
+          {navegacao.map((item) => {
+            const subitens = submenuDe(item);
+            const expandido = submenu === item.href;
+
+            return (
+              <li
+                key={item.href}
+                className={subitens ? "relative" : undefined}
+                // Hover é gesto de mouse: no toque o navegador emula
+                // pointerenter e o painel ficaria aberto depois do tap.
+                onPointerEnter={
+                  subitens
+                    ? (e) => e.pointerType === "mouse" && setSubmenu(item.href)
+                    : undefined
+                }
+                onPointerLeave={
+                  subitens
+                    ? (e) => e.pointerType === "mouse" && setSubmenu(null)
+                    : undefined
+                }
+                // Teclado: abre quando o foco entra em qualquer link do item e
+                // fecha quando sai para fora dele.
+                onFocus={subitens ? () => setSubmenu(item.href) : undefined}
+                onBlur={
+                  subitens
+                    ? (e) => {
+                        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                          setSubmenu(null);
+                        }
+                      }
+                    : undefined
+                }
+                onKeyDown={
+                  subitens
+                    ? (e) => {
+                        if (e.key === "Escape") setSubmenu(null);
+                      }
+                    : undefined
+                }
               >
-                <span
-                  className={`t-nav whitespace-nowrap transition-colors ${
-                    ativo(item.href)
-                      ? "text-texto-forte"
-                      : "text-texto-corpo hover:text-texto-forte"
-                  }`}
+                <Link
+                  href={item.href}
+                  aria-current={ativo(item.href) ? "page" : undefined}
+                  aria-expanded={subitens ? expandido : undefined}
+                  className="flex flex-col items-center gap-[7px] pt-1"
                 >
-                  {item.rotulo}
-                </span>
-                <span
-                  aria-hidden
-                  className={`h-[3px] w-full rounded-pill transition-colors ${
-                    ativo(item.href) ? "bg-conforto-500" : "bg-transparent"
-                  }`}
-                />
-              </Link>
-            </li>
-          ))}
+                  <span
+                    className={`t-nav flex items-center gap-1 whitespace-nowrap transition-colors ${
+                      ativo(item.href)
+                        ? "text-texto-forte"
+                        : "text-texto-corpo hover:text-texto-forte"
+                    }`}
+                  >
+                    {item.rotulo}
+                    {subitens && (
+                      <span
+                        aria-hidden
+                        className={`shrink-0 transition-transform ${
+                          expandido ? "rotate-180" : ""
+                        }`}
+                      >
+                        <IconeChevronBaixo tamanho={16} />
+                      </span>
+                    )}
+                  </span>
+                  <span
+                    aria-hidden
+                    className={`h-[3px] w-full rounded-pill transition-colors ${
+                      ativo(item.href) ? "bg-conforto-500" : "bg-transparent"
+                    }`}
+                  />
+                </Link>
+
+                {subitens && (
+                  // pt-3 faz a ponte entre o rótulo e o painel: sem ela o mouse
+                  // sai do item no caminho e o submenu fecha.
+                  <div
+                    className={`absolute left-1/2 top-full -translate-x-1/2 pt-3 transition-opacity duration-200 ${
+                      expandido ? "opacity-100" : "pointer-events-none opacity-0"
+                    }`}
+                  >
+                    <ul className="flex w-[260px] flex-col rounded-2xl border border-vidro-borda bg-vidro-preenchimento-forte p-2 vidro-04">
+                      {subitens.map((sub) => (
+                        <li key={sub.href}>
+                          <Link
+                            href={sub.href}
+                            aria-current={ativo(sub.href) ? "page" : undefined}
+                            className={`flex min-h-11 items-center rounded-pill px-4 t-campo transition-colors hover:bg-white/60 ${
+                              ativo(sub.href) ? "text-texto-forte" : "text-texto-corpo"
+                            }`}
+                          >
+                            {sub.rotulo}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
 
         {/* Ações */}
@@ -129,26 +234,49 @@ export function Navbar({
           className="pointer-events-auto mx-auto mt-3 max-h-[calc(100svh-120px)] max-w-[1360px] overflow-y-auto overscroll-contain rounded-2xl border border-vidro-borda bg-vidro-preenchimento-forte p-4 vidro-03 lg:hidden"
         >
           <ul className="flex flex-col">
-            {navegacao.map((item) => (
-              <li key={item.href} className="border-b border-vidro-borda-baixa last:border-0">
-                <Link
-                  href={item.href}
-                  aria-current={ativo(item.href) ? "page" : undefined}
-                  className="flex min-h-[52px] items-center justify-between py-3"
-                >
-                  <span
-                    className={`t-nav ${
-                      ativo(item.href) ? "text-texto-forte" : "text-texto-corpo"
-                    }`}
+            {navegacao.map((item) => {
+              const submenu = submenuDe(item);
+
+              return (
+                <li key={item.href} className="border-b border-vidro-borda-baixa last:border-0">
+                  <Link
+                    href={item.href}
+                    aria-current={ativo(item.href) ? "page" : undefined}
+                    className="flex min-h-[52px] items-center justify-between py-3"
                   >
-                    {item.rotulo}
-                  </span>
-                  {ativo(item.href) && (
-                    <span aria-hidden className="size-2 rounded-pill bg-conforto-500" />
+                    <span
+                      className={`t-nav ${
+                        ativo(item.href) ? "text-texto-forte" : "text-texto-corpo"
+                      }`}
+                    >
+                      {item.rotulo}
+                    </span>
+                    {ativo(item.href) && (
+                      <span aria-hidden className="size-2 rounded-pill bg-conforto-500" />
+                    )}
+                  </Link>
+
+                  {/* No toque não existe hover: as linhas ficam à vista, recuadas. */}
+                  {submenu && (
+                    <ul className="mb-2 flex flex-col border-l border-vidro-borda-baixa pl-4">
+                      {submenu.map((sub) => (
+                        <li key={sub.href}>
+                          <Link
+                            href={sub.href}
+                            aria-current={ativo(sub.href) ? "page" : undefined}
+                            className={`flex min-h-11 items-center t-campo ${
+                              ativo(sub.href) ? "text-texto-forte" : "text-texto-suave"
+                            }`}
+                          >
+                            {sub.rotulo}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
                   )}
-                </Link>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
 
           {/* No celular o CTA sai da barra (não cabe); aqui ele volta, inteiro. */}

@@ -7,6 +7,8 @@ import { FaixaDeCta } from "@/components/sections/FaixaDeCta";
 import { Breadcrumb, Tag } from "@/components/ui/Elementos";
 import { FotoDeUrl } from "@/components/ui/Foto";
 import { Secao } from "@/components/ui/Secao";
+import { BotaoLink } from "@/components/ui/Botao";
+import { chamadaDoArtigo } from "@/content/blog";
 import { postPorSlug, postsRelacionados } from "@/lib/dados/blog";
 
 /**
@@ -53,6 +55,7 @@ export default async function Artigo({
   if (!post) notFound();
 
   const relacionados = await postsRelacionados(post.slug);
+  const chamada = chamadaDoArtigo(post.slug);
 
   return (
     <>
@@ -73,7 +76,7 @@ export default async function Artigo({
 
           <FotoDeUrl
             src={post.capa}
-            alt=""
+            alt={post.titulo}
             className="mt-4 aspect-[760/420] w-full"
             sizes="(max-width: 768px) 100vw, 760px"
             prioridade
@@ -88,6 +91,15 @@ export default async function Artigo({
               <SemConteudo />
             )}
           </div>
+
+          {/* Caixa de chamada — a saída que faltava no fim de cada artigo.
+              O destino de cada um está em src/content/blog.ts. */}
+          <aside className="mt-6 flex w-full flex-col items-start gap-4 rounded-2xl border border-vidro-borda bg-vidro-preenchimento p-6 vidro-02 sm:p-8">
+            <p className="t-h5 text-texto-forte">{chamada.texto}</p>
+            <BotaoLink href={chamada.href} tamanho="M" tipo="secundaria">
+              {chamada.rotulo}
+            </BotaoLink>
+          </aside>
         </article>
       </Secao>
 

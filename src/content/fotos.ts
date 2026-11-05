@@ -37,7 +37,10 @@ export const fotos = {
   "emp-solucao-1": "/fotos/amostra-conforto.jpg",
   "emp-solucao-2": "/fotos/amostra-luz.jpg",
   "emp-solucao-3": "/fotos/amostra-frescor.jpg",
-  "empresas-hero": "/fotos/emp-galeria-5.jpg",
+  // Era /fotos/emp-galeria-5.jpg, a mesma foto que abre a galeria de
+  // /para-empresas — a repetição que a revisão de copy de 28/10/2026 pediu para
+  // tirar. emp-caso ficou livre quando o bloco de caso saiu da página.
+  "empresas-hero": "/fotos/emp-caso.jpg",
   "galeria-1": "/fotos/casas-galeria-1.jpg",
   "galeria-2": "/fotos/galeria-2.jpg",
   "galeria-3": "/fotos/galeria-3.jpg",

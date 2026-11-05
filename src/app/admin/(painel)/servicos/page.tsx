@@ -27,7 +27,7 @@ export default async function ServicosAdmin() {
     <>
       <CabecalhoDePagina
         titulo="Serviços"
-        descricao="A grade de cards da página de Serviços. A ordem daqui é a ordem no site."
+        descricao="As quatro linhas oficiais e a manutenção são publicadas pelo código do site (os números de ficha técnica têm de ser iguais nas doze páginas que os citam), então editar texto aqui não muda a página de Serviços. Esta lista serve para cadastrar algo fora do portfólio oficial."
         acoes={<LinkPainel href="/admin/servicos/novo">Novo serviço</LinkPainel>}
       />
 

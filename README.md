@@ -14,6 +14,7 @@ npm run lint
 
 npm run db:migrate  # aplica as migrations no banco de dev
 npm run db:seed     # popula o banco com o conteúdo inicial
+npm run db:alinhar  # simula o alinhamento do painel à revisão de copy
 npm run db:studio   # abre o Prisma Studio
 ```
 
@@ -87,6 +88,38 @@ Três armadilhas deste banco, todas já encontradas na prática:
   `src/lib/prisma.ts` ele é recriado quando a `DATABASE_URL` muda — então
   corrigir a senha no `.env` com o servidor rodando já funciona. Se mesmo assim
   aparecer `pool timeout … active=0 idle=0`, reinicie o `npm run dev`.
+
+## Conteúdo no código x conteúdo no painel
+
+A revisão de copy da MDPL Brands de 28/10/2026 (`Copy do Site e Revisão com
+Ajustes _ RR Film`) mudou a divisão. A regra que a motivou está no próprio
+documento: cada número de ficha técnica "precisa ser padronizado em todos os
+pontos de contato com a mesma informação". O bloqueio UV da Nanocerâmica
+aparece em doze lugares; com o número digitado em cada um, a primeira correção
+de ficha valeria em alguns e não em outros.
+
+**No código** (`src/content/`), versionado e igual em todas as páginas:
+
+| Arquivo | O que define |
+| --- | --- |
+| `linhas.ts` | As quatro linhas e a manutenção: nome oficial, nome curto, URL, frase, indicadores, público e **todos os números de ficha técnica** (`NUMEROS`) |
+| `whatsapp.ts` | As mensagens pré-preenchidas por botão (`WA-GERAL`, `WA-NANO-CASA`…) e o `data-produto`/`data-publico` de cada uma |
+| `blog.ts` | A caixa de chamada no fim de cada artigo e o link interno que o corpo deve receber |
+| `formulario.ts` | As opções dos formulários e a pré-seleção por URL (`?tipo=empresa`, `?interesse=calor`) |
+
+As cinco internas (`/servicos/pelicula-nanoceramica` e companhia) são páginas de
+código, não internas do editor de blocos: o documento especifica onze blocos com
+colunas, âncoras, tabela comparativa e FAQ — estrutura que o editor não monta. E
+eram justamente elas que publicavam a casca "Texto em produção" com `noindex`.
+
+**No painel**, que continua mandando no que muda sem deploy: artigos do blog,
+fotos e cabeçalhos das oito galerias de obra, depoimentos e dados institucionais
+(telefone, CNPJ, horário).
+
+**Consequência a saber:** `/admin/servicos` e `/admin/produtos` não publicam mais
+a grade de /servicos nem a da Home. As duas telas continuam de pé — servem para
+cadastrar algo fora do portfólio oficial — e trazem o aviso no cabeçalho. Para
+mudar o texto de uma das quatro linhas, edite `src/content/linhas.ts`.
 
 ## Painel administrativo
 
@@ -185,7 +218,15 @@ Os formulários de `/contato` e `/para-empresas` usam
 `src/components/formularios/FormularioDeOrcamento.tsx`, que envia pela Server
 Action `src/lib/pedidos/acoes.ts`:
 
-1. valida os campos (`src/lib/pedidos/esquema.ts`);
+Os campos são os da revisão de copy. Em `/contato`: nome, WhatsApp, e-mail
+(**opcional**), cidade, "Para onde é a película?", "O que você procura?" e o
+texto livre. Em `/para-empresas`: nome, empresa, segmento, cidade, WhatsApp,
+e-mail, metragem e mensagem. As páginas de produto pré-selecionam o campo certo
+pela URL (`/contato?tipo=empresa&interesse=calor`), lida no servidor.
+
+1. valida os campos (`src/lib/pedidos/esquema.ts`) — as opções de `<select>`
+   são conferidas contra `src/content/formulario.ts`, então campo adulterado no
+   navegador não grava valor inventado;
 2. filtra robô sem captcha — campo-isca invisível, tempo mínimo de 3 s entre
    abrir a página e enviar, e no máximo 5 pedidos por IP por hora;
 3. salva em `PedidoDeOrcamento` — aparece em **`/admin/pedidos`**, com status
@@ -199,12 +240,25 @@ os cookies, o navegador empurra no dataLayer (`src/lib/conversao.ts`):
 
 | Evento | Parâmetros | Quando |
 | --- | --- | --- |
-| `generate_lead` | `formulario`: `contato` ou `empresas` | pedido de orçamento salvo |
-| `clique_contato` | `canal`: `whatsapp`, `telefone` ou `email`; `local`: caminho da página | clique em link de contato em qualquer página (`RastreioDeContato.tsx`) |
+| `envio_formulario` | `formulario`: `contato` ou `empresas`; `publico` e `interesse`: os campos "Para onde é a película?" e "O que você procura?" | pedido de orçamento salvo |
+| `click_whatsapp` | `local`: caminho da página; `produto` e `publico`: os `data-*` do próprio botão | clique em link de WhatsApp |
+| `click_telefone` | `local` | clique em link `tel:` |
+| `click_email` | `local` | clique em link `mailto:` |
 
-As tags do GTM (conversão do GA4, Lead da Meta, conversão do Google Ads)
-usam esses eventos como acionador "Evento personalizado". Nenhum dado pessoal
-vai no dataLayer.
+As tags do GTM (conversão do GA4, Lead da Meta, conversão do Google Ads) usam
+esses eventos como acionador "Evento personalizado". Nenhum dado pessoal vai no
+dataLayer.
+
+> **Os nomes mudaram no deploy da revisão de copy** (28/10/2026).
+> `envio_formulario` substitui `generate_lead`, e `click_whatsapp` /
+> `click_telefone` / `click_email` substituem `clique_contato`. **Os acionadores
+> do contêiner precisam ser reapontados no mesmo deploy** — senão a conversão
+> para de ser contada. Emitir os nomes velhos junto resolveria o prazo e criaria
+> o problema pior: conversão contada em dobro no Google Ads.
+
+Cada CTA de WhatsApp carrega `data-produto` e `data-publico` (ver
+`src/content/whatsapp.ts`), então dá para separar no GTM o clique que saiu do
+bloco "Para sua empresa" da Refletiva do que saiu do botão flutuante.
 
 ## Dependências e segurança
 
@@ -268,7 +322,25 @@ npm run db:seed
 ```
 
 Os deploys seguintes só precisam do `migrate deploy`, e apenas quando houver
-migration nova. As imagens enviadas pelo painel ficam em `public/uploads` no
+migration nova.
+
+**No deploy da revisão de copy (28/10/2026), nesta ordem:**
+
+```bash
+npx prisma migrate deploy   # campos novos do formulário (cidade, público, interesse, empresa)
+npm run db:alinhar          # simulação: lista o que mudaria
+npm run db:alinhar -- --aplicar
+```
+
+O `db:seed` não serve aqui: ele é conservador de propósito e não sobrescreve o
+que já foi editado no painel. O `db:alinhar` é o contrário — reescreve, uma vez,
+exatamente o que a revisão mudou: nomes e URLs das linhas, desativação da "Linha
+Smart" e do card "Proteção UV", cabeçalhos das galerias, as três galerias novas
+(segurança, refletiva, jateado) e o CNPJ real. Ele **não** toca em depoimentos,
+em fotos já curadas nem em corpo de artigo; sobre depoimentos ele só relata o
+que está publicado, porque a autorização é decisão da RR Film.
+
+Reaponte também os acionadores do GTM — ver "Mensuração". As imagens enviadas pelo painel ficam em `public/uploads` no
 servidor e **não** vão no ZIP — o pacote leva só a pasta vazia, para o primeiro
 upload ter onde cair.
 
@@ -405,20 +477,63 @@ site não mudar na virada.
 
 ## Pendências para produção
 
-Resolvidas pelo painel, sem deploy:
+### Antes de publicar — depende da RR Film
 
-- **CNPJ real no rodapé** — `/admin/conteudo` (o Figma usa `00.000.000/0001-00`).
-- **Texto dos artigos do blog** — `/admin/blog`. Os sete artigos foram semeados
-  publicados e sem corpo, como o site já estava: a página mostra a casca "texto
-  em produção" e sai do índice dos buscadores até alguém escrever.
-- **Autorização dos depoimentos** — `/admin/conteudo` tem a marcação por
-  depoimento, e o site só publica os autorizados. Os três vieram do Figma
-  marcados como autorizados, para o site não mudar na virada; confirme antes de
-  produção.
+- **Nanocerâmica: conferida.** O laudo técnico do fabricante (Sun Blue Nano
+  Ceramic, ensaio QUI/L-327.667/1/21) chegou em 04/11/2026 e está publicado em
+  `public/documentos/`. Dois números do documento de copy não se sustentaram e
+  foram **corrigidos para baixo** em `NUMEROS`: bloqueio de UV de 99,6% → **99%**
+  (ensaio: 98,87%) e rejeição de infravermelho de 95% → **90%** (ensaio:
+  90,2%–90,7%). Visibilidade de 70% e garantia de 15 anos bateram. Vale avisar a
+  MDPL Brands: os dois valores antigos circulam em material de campanha.
+- **Ainda sem laudo:** 400 micras e 10 vezes da PS4, 62% da Refletiva, 82% do
+  Jateado, 48 horas e 12 meses da manutenção. Continuam sendo o que a RR Film
+  informou. Todos ficam em `NUMEROS`, em `src/content/linhas.ts`: corrigir ali
+  atualiza o site inteiro.
+- **Garantia da PS4.** O passo 4 de "Como aplicamos" da página de segurança diz
+  que o prazo é informado na visita, porque o documento pede confirmação. Com o
+  prazo em mãos, escreva o número.
+- **NBR 7199.** A afirmação de atendimento à norma saiu do site (ficou só o
+  artigo do blog que explica a norma). Volta quando o fabricante confirmar em
+  quais aplicações a PS4 atende.
+- **Acabamentos do jateado.** A página lista jateado total, faixas, recortes e
+  colorido. Confirme quais a RR Film oferece — e peça uma foto real de cada.
+- **Autorização dos depoimentos.** O site só publica os marcados como
+  autorizados em `/admin/conteudo`; sem nenhum, o bloco da Home some. Em banco
+  novo o seed os cria **sem** autorização. Os que já estão no ar vieram do
+  Figma marcados como autorizados — o `db:alinhar` avisa quais são.
+- **Fotos.** Faltam material da linha de segurança (o card e a galeria ficam sem
+  foto), as fotos ou o vídeo da demonstração no bloco "Prova na hora" da Home, e
+  uma foto real da equipe ou da fachada para o Open Graph de `/a-marca`. As
+  capas repetidas do blog também são troca de painel.
 
-Ainda dependem de código ou de material:
+### Resolvido em 04/11/2026
+
+- **Ficha técnica da Nanocerâmica.** O laudo do fabricante está em
+  `public/documentos/laudo-tecnico-nanoceramica-ultra-hd.pdf` e o botão "Baixar
+  ficha técnica (PDF)" aponta para ele (`FICHA_TECNICA_PDF`, na página da
+  Nanocerâmica). Como é arquivo em `public/`, vai no ZIP do deploy.
+- **Portfólio corporativo.** Não é PDF: é a página "Instalações da semana" no
+  Google Sites da marca. O botão de `/para-empresas` virou **"Ver portfólio de
+  obras"** e abre em outra aba (`PORTFOLIO`). Se um dia houver PDF, troque a
+  constante e o rótulo.
+
+### Depende de código ou de serviço
 
 - Chaves reais do hCaptcha (hoje o `.env` usa as de teste).
 - Envio da newsletter do blog (os formulários de orçamento já enviam — ver
   "Pedidos de orçamento e conversões").
-- Ficha técnica em PDF para o botão "Baixar ficha em PDF".
+- **Links no meio do texto dos artigos.** A caixa de chamada no fim de cada
+  artigo já está no ar. O link na primeira menção ao produto depende do corpo
+  do artigo, que é escrito no painel; o par âncora → destino de cada um está em
+  `src/content/blog.ts`, em `linkNoTexto`.
+- **Reapontar os acionadores do GTM** para os nomes novos de evento, no mesmo
+  deploy — ver "Mensuração".
+
+### Uma tensão do próprio documento
+
+A regra global manda trocar "29 anos" por "desde 1997" em todo o site, "para o
+texto não envelhecer". Mas o bloco 4 de `/para-empresas` tem, como copy
+aprovada, "Desde 1997: quase 30 anos de experiência técnica em películas". O
+site segue a copy aprovada; se a RR Film preferir a regra, é só tirar a oração
+em `src/app/(site)/para-empresas/page.tsx`.

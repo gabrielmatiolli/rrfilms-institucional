@@ -24,8 +24,18 @@ import { esquemaDoPedido } from "@/lib/pedidos/esquema";
 export type EstadoDoPedido =
   | { situacao: "inicial" }
   | { situacao: "erro"; mensagem: string }
-  /** `id` muda a cada envio — é o que o formulário usa para disparar a conversão uma vez só. */
-  | { situacao: "enviado"; id: string };
+  /**
+   * `id` muda a cada envio — é o que o formulário usa para disparar a conversão
+   * uma vez só. `publico` e `interesse` vão para o evento `envio_formulario`
+   * do GTM: é o que o documento pede para separar lead de casa de lead de
+   * empresa sem abrir o painel. Nenhum dado pessoal sai daqui.
+   */
+  | {
+      situacao: "enviado";
+      id: string;
+      publico?: string;
+      interesse?: string;
+    };
 
 /** Menos que isso entre abrir a página e enviar é robô. */
 const TEMPO_MINIMO_MS = 3_000;
@@ -47,13 +57,19 @@ export async function enviarPedido(
     return { situacao: "erro", mensagem: "Não foi possível enviar. Confira os campos e tente de novo." };
   }
 
+  const corporativo = formulario.get("origem") === "EMPRESAS";
+
   const analise = esquemaDoPedido.safeParse({
     origem: formulario.get("origem"),
     nome: formulario.get("nome") ?? "",
+    empresa: corporativo ? (formulario.get("empresa") ?? "") : null,
     whatsapp: formulario.get("whatsapp") ?? "",
     email: formulario.get("email") ?? "",
-    detalhe: formulario.get("detalhe") ?? "",
-    mensagem: formulario.get("origem") === "CONTATO" ? (formulario.get("mensagem") ?? "") : null,
+    cidade: formulario.get("cidade") ?? "",
+    publico: formulario.get("publico") ?? "",
+    interesse: corporativo ? null : (formulario.get("interesse") ?? ""),
+    detalhe: corporativo ? (formulario.get("detalhe") ?? "") : null,
+    mensagem: formulario.get("mensagem") ?? "",
     aceitaWhatsapp: formulario.get("aceita_whatsapp") === "on",
   });
 
@@ -93,7 +109,12 @@ export async function enviarPedido(
 
     revalidatePath("/admin/pedidos");
     revalidatePath("/admin");
-    return { situacao: "enviado", id: pedido.id };
+    return {
+      situacao: "enviado",
+      id: pedido.id,
+      publico: pedido.publico ?? undefined,
+      interesse: pedido.interesse ?? undefined,
+    };
   } catch (erro) {
     console.error("Falha ao salvar pedido de orçamento:", erro);
     return {

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 import { BotaoLink } from "@/components/ui/Botao";
-import { IconeCasa, IconeCheck, IconePredio } from "@/components/ui/Icone";
+import { IconeCasa, IconePredio } from "@/components/ui/Icone";
 import { fotos } from "@/content/fotos";
 
 /**
@@ -22,24 +22,20 @@ import { fotos } from "@/content/fotos";
 const LADOS = {
   casas: {
     sobrancelha: "Residencial",
-    titulo: "CASAS",
-    itens: [
-      "A sala que para de esquentar à tarde",
-      "Sofá e piso que não desbotam",
-      "Privacidade sem perder a vista",
-    ],
+    marca: "CASAS",
+    titulo: "Conforto para a sua família",
+    texto:
+      "Sala mais fresca à tarde, móveis protegidos do sol, sacada segura para crianças e pets, privacidade sem cortina fechada.",
     rotulo: "Ver soluções para casa",
     href: "/para-casas",
   },
   empresas: {
     sobrancelha: "Corporativo",
-    titulo: "EMPRESAS",
-    itens: [
-      "Conta de energia mais baixa",
-      "Fachada uniforme em todo o prédio",
-      "Manutenção e suporte depois da entrega",
-    ],
-    rotulo: "Ver soluções para empresa",
+    marca: "EMPRESAS",
+    titulo: "Ambientes que trabalham melhor",
+    texto:
+      "Escritórios, clínicas e lojas com menos calor e ofuscamento, privacidade nas salas e acabamento alinhado ao projeto de arquitetura.",
+    rotulo: "Ver soluções para empresas",
     href: "/para-empresas",
   },
 } as const;
@@ -116,17 +112,13 @@ export function SegmentoDividido() {
                 <Icone tamanho={30} />
               </span>
               <p className="t-sobrancelha text-escuro-900">{dados.sobrancelha}</p>
-              <h3 className="t-h1">{dados.titulo}</h3>
-              <ul className="flex flex-col gap-2">
-                {dados.itens.map((item) => (
-                  <li key={item} className="flex items-center gap-[10px] t-corpo-p text-escuro-900">
-                    <span className="shrink-0 text-escuro-900">
-                      <IconeCheck tamanho={17} />
-                    </span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+              {/* A palavra grande é a âncora visual do componente; quem lê com
+                  leitor de tela já ouviu "Residencial" na sobrancelha. */}
+              <p aria-hidden className="t-h1">
+                {dados.marca}
+              </p>
+              <h3 className="t-h4 text-escuro-900">{dados.titulo}</h3>
+              <p className="t-corpo text-escuro-900">{dados.texto}</p>
               <BotaoLink href={dados.href} tamanho="M" className="mt-2">
                 {dados.rotulo}
               </BotaoLink>

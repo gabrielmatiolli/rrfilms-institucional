@@ -14,7 +14,10 @@ export const CHAVES_DE_GALERIA = [
   { chave: "servicos", nome: "Serviços" },
   { chave: "para-casas", nome: "Para casas" },
   { chave: "para-empresas", nome: "Para empresas" },
-  { chave: "produto-nanoceramica", nome: "Produto · Nanocerâmica Ultra HD" },
+  { chave: "produto-nanoceramica", nome: "Linha · Nanocerâmica Ultra HD" },
+  { chave: "linha-seguranca", nome: "Linha · Segurança Antiestilhaço" },
+  { chave: "linha-refletiva", nome: "Linha · Refletiva Black Silver II" },
+  { chave: "linha-jateado", nome: "Linha · Jateado e Decorativo" },
 ] as const;
 
 export type ChaveDeGaleria = (typeof CHAVES_DE_GALERIA)[number]["chave"];

@@ -1,12 +1,20 @@
 /**
- * O conteúdo que hoje vive fixo em src/content/* e src/lib/site.ts, no formato
- * do banco. Textos copiados palavra por palavra do arquivo Figma "RR Films" —
- * a migração não é lugar de reescrever copy.
+ * O conteúdo inicial do banco.
  *
  * Os caminhos de foto são os mesmos de src/content/fotos.ts: o painel passa a
  * apontar para /uploads quando alguém trocar a imagem, mas o acervo de obra que
  * veio do Figma continua em /fotos.
+ *
+ * Desde a revisão de copy de 28/10/2026, `servicos` e `produtos` espelham
+ * src/content/linhas.ts — que é a fonte do site público. As quatro linhas
+ * oficiais e os números de ficha técnica vivem no código, porque o documento
+ * exige o mesmo valor em todos os pontos de contato e eles aparecem em doze
+ * páginas. Estas linhas do banco existem para o painel não contradizer o site e
+ * para cadastrar algo fora do portfólio oficial. Ver o README, "Conteúdo no
+ * código x conteúdo no painel".
  */
+
+import { LINHAS, MANUTENCAO } from "../src/content/linhas";
 
 // --- Blog -------------------------------------------------------------------
 
@@ -63,7 +71,7 @@ export const posts = [
   {
     slug: "nbr-7199-na-pratica",
     categoria: "seguranca",
-    titulo: "NBR 7199 na prática: quando o filme anti-estilhaço é obrigatório",
+    titulo: "NBR 7199 na prática: quando o filme antiestilhaço é obrigatório",
     resumo:
       "A norma define onde o vidro precisa de retenção de fragmentos. Traduzimos o texto técnico para o que isso significa em fachada, porta de correr e área de circulação.",
     capa: "/fotos/blog-capa-padrao.jpg",
@@ -92,9 +100,19 @@ export const posts = [
   },
 ];
 
-// --- Serviços ---------------------------------------------------------------
+// --- Serviços e linhas de película ----------------------------------------
+//
+// Derivados de src/content/linhas.ts: os nomes, os números, as URLs e a ordem
+// são os mesmos que o site publica. Trocar um número ali atualiza o site e o
+// painel na mesma edição.
 
 type LinhaCromatica = "CONFORTO" | "LUZ" | "FRESCOR";
+
+const CROMATICA: Record<string, LinhaCromatica> = {
+  conforto: "CONFORTO",
+  luz: "LUZ",
+  frescor: "FRESCOR",
+};
 
 export const servicos: {
   slug: string;
@@ -106,149 +124,41 @@ export const servicos: {
   dados: { valor: string; rotulo: string }[];
   href: string;
 }[] = [
+  ...LINHAS.map((linha) => ({
+    slug: linha.slug,
+    linha: CROMATICA[linha.linha],
+    tag: linha.familia,
+    titulo: linha.nomeCurto,
+    descricao: linha.frase,
+    foto: linha.foto ?? "",
+    dados: [...linha.indicadores],
+    href: linha.url,
+  })),
   {
-    slug: "nanoceramica-ultra-hd",
-    linha: "CONFORTO",
-    tag: "Nanocerâmica Ultra HD",
-    titulo: "Nanocerâmica Ultra HD",
-    descricao:
-      "Rejeita até 79% da energia solar sem escurecer o ambiente. O ar-condicionado trabalha menos e o vidro para de esquentar ao toque.",
-    foto: "/fotos/amostra-conforto.jpg",
-    dados: [
-      { valor: "79%", rotulo: "menos calor" },
-      { valor: "99%", rotulo: "bloqueio UV" },
-    ],
-    href: "/produtos/nanoceramica-ultra-hd",
-  },
-  {
-    slug: "seguranca-e-anti-vandalismo",
-    linha: "FRESCOR",
-    tag: "Segurança",
-    titulo: "Segurança e anti-vandalismo",
-    descricao:
-      "Filme de retenção que mantém os cacos presos ao vidro em caso de impacto. Atende à NBR 7199 em fachadas e áreas de circulação.",
-    foto: "/fotos/amostra-luz.jpg",
-    dados: [
-      { valor: "400µ", rotulo: "espessura do filme" },
-      { valor: "NBR", rotulo: "7199 atendida" },
-    ],
-    href: "/contato",
-  },
-  {
-    slug: "privacidade-e-jateado",
-    linha: "LUZ",
-    tag: "Decorativa",
-    titulo: "Privacidade e jateado",
-    descricao:
-      "Efeito fosco, faixas ou recorte sob medida. Fecha a visão de fora sem tirar a luz que entra.",
-    foto: "/fotos/amostra-frescor.jpg",
-    dados: [
-      { valor: "0%", rotulo: "de visão externa" },
-      { valor: "82%", rotulo: "de luz preservada" },
-    ],
-    href: "/contato",
-  },
-  {
-    slug: "protecao-uv",
-    linha: "CONFORTO",
-    tag: "Nanocerâmica Ultra HD",
-    titulo: "Proteção UV",
-    descricao:
-      "Bloqueio de 99% do ultravioleta. Tecido, madeira e obra de arte param de desbotar — e a pele de quem trabalha ao lado do vidro agradece.",
-    foto: "/fotos/amostra-conforto.jpg",
-    dados: [
-      { valor: "99,9%", rotulo: "de UV bloqueado" },
-      { valor: "5×", rotulo: "mais vida ao tecido" },
-    ],
-    href: "/produtos/nanoceramica-ultra-hd",
-  },
-  {
-    slug: "espelhada-e-refletiva",
-    linha: "FRESCOR",
-    tag: "Segurança",
-    titulo: "Espelhada e refletiva",
-    descricao:
-      "Uniformiza a fachada e devolve parte da radiação antes de ela entrar. Indicada para vidro comum em orientação oeste.",
-    foto: "/fotos/amostra-luz.jpg",
-    dados: [
-      { valor: "62%", rotulo: "de reflexão externa" },
-      { valor: "20%", rotulo: "de luz visível" },
-    ],
-    href: "/contato",
-  },
-  {
-    slug: "manutencao-e-reposicao",
-    linha: "LUZ",
-    tag: "Decorativa",
-    titulo: "Manutenção e reposição",
-    descricao:
-      "Remoção de película velha, correção de bolha e troca pontual. Atendemos também aplicação feita por terceiros.",
-    foto: "/fotos/amostra-frescor.jpg",
-    dados: [
-      { valor: "48h", rotulo: "prazo médio" },
-      { valor: "12 m", rotulo: "de garantia do reparo" },
-    ],
-    href: "/contato",
-  },
-];
-
-// --- Linhas de película -----------------------------------------------------
-
-export const produtos = [
-  {
-    slug: "nanoceramica-ultra-hd",
-    nome: "Nanocerâmica",
-    destaque: "Ultra HD",
-    promessa: "O calor para no vidro. A vista continua lá.",
-    descricao:
-      "Para sala, quarto e varanda que pegam sol direto. Bloqueia mais de 99% dos raios que desbotam móvel, piso e cortina — sem escurecer o ambiente.",
-    foto: "/fotos/linha-1.jpg",
-    // A página desta linha é a desenhada no Figma, com os componentes autorais;
-    // por isso ela não é gerada pelo editor de blocos.
-    href: "/produtos/nanoceramica-ultra-hd",
-  },
-  {
-    slug: "seguranca-antiestilhaco",
-    nome: "Segurança",
-    destaque: "Antiestilhaço",
-    promessa: "Se o vidro quebrar, ele não vira caco.",
-    descricao:
-      "Deixa o vidro até 10 vezes mais resistente e segura os pedaços colados na película. Para porta de correr, janela grande e box, com criança e pet em casa.",
-    // A pasta SERVIÇOS ainda não tem material fotográfico desta linha.
+    slug: MANUTENCAO.slug,
+    linha: CROMATICA[MANUTENCAO.linha],
+    tag: MANUTENCAO.familia,
+    titulo: MANUTENCAO.nome,
+    descricao: MANUTENCAO.frase,
     foto: "",
-    href: "/servicos#seguranca",
-  },
-  {
-    slug: "refletiva-black-silver",
-    nome: "Refletiva",
-    destaque: "Black Silver",
-    promessa: "De fora ninguém vê. De dentro você vê tudo.",
-    descricao:
-      "Espelhada por fora, fumê discreto por dentro. Resolve a privacidade durante o dia e acaba com o reflexo na TV e no computador.",
-    foto: "/fotos/linha-2.jpg",
-    href: "/servicos#refletiva",
-  },
-  {
-    slug: "decorativa-jateada",
-    nome: "Decorativa",
-    destaque: "Jateada",
-    promessa: "Divide o ambiente sem levantar parede.",
-    descricao:
-      "Efeito jateado, faixas e desenhos sob medida. Para divisória de escritório e clínica, porta de cozinha e box de banheiro.",
-    foto: "/fotos/linha-3.jpg",
-    href: "/servicos#decorativa",
-  },
-  {
-    slug: "linha-smart",
-    nome: "Linha",
-    destaque: "Smart",
-    promessa: "Transparente agora, fechado no segundo seguinte.",
-    descricao:
-      "O mesmo vidro serve de janela e de parede. Para sala de reunião, consultório e ambientes que precisam de privacidade só de vez em quando.",
-    foto: "/fotos/linha-4.jpg",
-    href: "/servicos#smart",
+    dados: [...MANUTENCAO.indicadores],
+    href: MANUTENCAO.url,
   },
 ];
+
+/**
+ * As linhas de película, como a Home as mostrava. A "Linha Smart" saiu: não faz
+ * parte do portfólio da RR Film.
+ */
+export const produtos = LINHAS.map((linha) => ({
+  slug: linha.slug,
+  nome: linha.nomeCurto,
+  destaque: "",
+  promessa: linha.frase,
+  descricao: linha.frase,
+  foto: linha.foto ?? "",
+  href: linha.url,
+}));
 
 // --- Galerias ---------------------------------------------------------------
 
@@ -257,8 +167,8 @@ export const galerias = [
     chave: "home",
     nomeNoPainel: "Home",
     sobrancelha: "Obras da RR Film",
-    titulo: "Vidro de cliente, não render de catálogo",
-    lead: "Toda foto do site é de obra aplicada pela equipe em Itatiba e região.",
+    titulo: "Vidro de cliente, não foto de catálogo",
+    lead: "Todas as fotos são de obras da RR Film em Itatiba e região.",
     itens: [
       { imagem: "/fotos/casas-galeria-1.jpg", alt: "Sala com pano de vidro depois da aplicação" },
       { imagem: "/fotos/galeria-2.jpg", alt: "Sacada com película de controle solar" },
@@ -272,8 +182,8 @@ export const galerias = [
     chave: "servicos",
     nomeNoPainel: "Serviços",
     sobrancelha: "Obras recentes",
-    titulo: "Trabalho aplicado, não render",
-    lead: "Todas as fotos desta página são de obras da RR Film em Itatiba e região.",
+    titulo: "Trabalho aplicado, não imagem ilustrativa",
+    lead: "Todas as fotos são de obras da RR Film em Itatiba e região.",
     itens: [
       { imagem: "/fotos/srv-galeria-1.jpg", alt: "Pano de vidro residencial com controle solar" },
       { imagem: "/fotos/srv-galeria-2.jpg", alt: "Sacada com película aplicada" },
@@ -286,9 +196,9 @@ export const galerias = [
   {
     chave: "para-casas",
     nomeNoPainel: "Para casas",
-    sobrancelha: "Casas que já fizemos",
+    sobrancelha: "Antes e depois",
     titulo: "Como fica depois de aplicada",
-    lead: "Nenhuma foto de banco de imagem. É obra nossa, em casa de cliente.",
+    lead: "Todas as fotos são de obras da RR Film em Itatiba e região.",
     itens: [
       { imagem: "/fotos/casas-galeria-1.jpg", alt: "Sala com pano de vidro e película aplicada" },
       { imagem: "/fotos/casas-galeria-2.jpg", alt: "Varanda com película de controle solar" },
@@ -315,7 +225,7 @@ export const galerias = [
   },
   {
     chave: "produto-nanoceramica",
-    nomeNoPainel: "Produto · Nanocerâmica Ultra HD",
+    nomeNoPainel: "Linha · Nanocerâmica Ultra HD",
     sobrancelha: "Onde já aplicamos",
     titulo: "A mesma película, em casas diferentes",
     lead: "Sacada, sala com pano de vidro, quarto. Todas com a Nanocerâmica Ultra HD.",
@@ -328,15 +238,74 @@ export const galerias = [
       { imagem: "/fotos/prod-galeria-6.jpg", alt: "Fachada residencial com película" },
     ],
   },
+  {
+    chave: "linha-seguranca",
+    nomeNoPainel: "Linha · Segurança Antiestilhaço",
+    sobrancelha: "Onde já aplicamos",
+    titulo: "Vidro protegido, casa e empresa",
+    lead: "Todas as fotos são de obras da RR Film em Itatiba e região.",
+    // Legenda e alt na forma pedida pelo documento: ambiente + película + cidade.
+    itens: [
+      {
+        imagem: "/fotos/srv-galeria-3.jpg",
+        alt: "Janela de sala · Segurança Antiestilhaço · Itatiba",
+      },
+      {
+        imagem: "/fotos/casas-galeria-4.jpg",
+        alt: "Porta de vidro · Segurança Antiestilhaço · Itatiba",
+      },
+    ],
+  },
+  {
+    chave: "linha-refletiva",
+    nomeNoPainel: "Linha · Refletiva Black Silver II",
+    sobrancelha: "Onde já aplicamos",
+    titulo: "Fachadas e escritórios com privacidade de dia",
+    lead: "Todas as fotos são de obras da RR Film em Itatiba e região.",
+    itens: [
+      {
+        imagem: "/fotos/srv-galeria-5.jpg",
+        alt: "Fachada · Refletiva Black Silver II · Itatiba",
+      },
+      {
+        imagem: "/fotos/casas-galeria-5.jpg",
+        alt: "Fachada residencial · Refletiva Black Silver II · Itatiba",
+      },
+    ],
+  },
+  {
+    chave: "linha-jateado",
+    nomeNoPainel: "Linha · Jateado e Decorativo",
+    sobrancelha: "Onde já aplicamos",
+    titulo: "Divisórias e portas com privacidade e luz",
+    lead: "Todas as fotos são de obras da RR Film em Itatiba e região.",
+    itens: [
+      {
+        imagem: "/fotos/srv-galeria-6.jpg",
+        alt: "Divisória de escritório · Vinil Jateado e Decorativo · Itatiba",
+      },
+      {
+        imagem: "/fotos/galeria-4.jpg",
+        alt: "Porta de vidro · Vinil Jateado e Decorativo · Itatiba",
+      },
+      {
+        imagem: "/fotos/casas-galeria-6.jpg",
+        alt: "Box de banheiro · Vinil Jateado e Decorativo · Itatiba",
+      },
+    ],
+  },
 ];
 
 // --- Depoimentos ------------------------------------------------------------
 
 /**
- * `autorizado: true` reproduz o que o site já publica hoje. O componente
- * Depoimento do Figma registra que nome real de cliente exige autorização por
- * escrito — a marcação existe no painel para que essa regra possa ser cobrada
- * antes da virada para produção.
+ * `autorizado: false` desde a revisão de copy de 28/10/2026: "usar só
+ * depoimentos reais, com nome, bairro ou cidade e foto autorizada. Sem
+ * depoimentos aprovados, ocultar o bloco."
+ *
+ * O site só publica os marcados como autorizados, então em banco novo o bloco
+ * de depoimentos nasce oculto. Quem libera é o painel, depois de a RR Film ter
+ * a autorização escrita do cliente — não o seed.
  */
 export const depoimentos = [
   {
@@ -345,15 +314,15 @@ export const depoimentos = [
     nome: "Marina Alcântara",
     contexto: "Casa em condomínio · Itatiba",
     ativo: true,
-    autorizado: true,
+    autorizado: false,
   },
   {
     citacao:
       "“Precisávamos resolver o calor sem trocar o vidro do prédio inteiro. Fizeram em dois fins de semana e não paramos um dia.”",
     nome: "Rodrigo Sette",
-    contexto: "Escritório em Campinas · 3.200 m²",
+    contexto: "Escritório · Campinas",
     ativo: true,
-    autorizado: true,
+    autorizado: false,
   },
   {
     citacao:
@@ -361,6 +330,6 @@ export const depoimentos = [
     nome: "Camila Prado",
     contexto: "Casa em condomínio · Jundiaí",
     ativo: true,
-    autorizado: true,
+    autorizado: false,
   },
 ];

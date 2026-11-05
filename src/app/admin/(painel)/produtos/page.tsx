@@ -21,7 +21,7 @@ export default async function ProdutosAdmin() {
     <>
       <CabecalhoDePagina
         titulo="Produtos"
-        descricao="As linhas de película do portfólio. A ordem daqui é a ordem na Home."
+        descricao="As quatro linhas oficiais são publicadas pelo código do site, igual à página de Serviços: editar texto aqui não muda a Home. Use para cadastrar uma linha nova antes de ela entrar no portfólio."
         acoes={<LinkPainel href="/admin/produtos/novo">Nova linha</LinkPainel>}
       />
 

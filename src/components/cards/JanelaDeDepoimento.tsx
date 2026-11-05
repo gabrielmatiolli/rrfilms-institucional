@@ -45,14 +45,11 @@ export function JanelaDeDepoimento({ fala }: { fala: Fala }) {
 
       {/* Citação */}
       <div className="relative flex flex-1 flex-col justify-between gap-6 p-7 sm:p-8">
-        <div className="flex items-center gap-3">
-          <span className="flex size-11 items-center justify-center rounded-pill bg-conforto-300 t-h5 text-escuro-900">
-            {fala.inicial ?? fala.nome.charAt(0)}
-          </span>
-          <div className="flex flex-col gap-1">
-            <Estrelas tamanho={15} />
-            <span className="t-micro text-texto-suave">Avaliação no Google</span>
-          </div>
+        {/* Sem o círculo de inicial: a revisão de copy de 28/10/2026 tirou os
+            "M · R · C", que faziam o papel de foto de cliente que não existe. */}
+        <div className="flex flex-col gap-1">
+          <Estrelas tamanho={15} />
+          <span className="t-micro text-texto-suave">Avaliação no Google</span>
         </div>
 
         <blockquote className="t-corpo-g text-texto-forte">{fala.citacao}</blockquote>

@@ -18,6 +18,7 @@ export function HeroSimples({
   sobrancelha,
   titulo,
   lead,
+  acoes,
   foto,
   alturaClasse = "min-h-[420px] md:min-h-[520px]",
 }: {
@@ -25,6 +26,8 @@ export function HeroSimples({
   sobrancelha?: string;
   titulo: ReactNode;
   lead?: ReactNode;
+  /** Botões do herói. As internas de produto abrem com medição + WhatsApp. */
+  acoes?: ReactNode;
   foto: SlotDeFoto;
   alturaClasse?: string;
 }) {
@@ -59,6 +62,12 @@ export function HeroSimples({
         {sobrancelha && <p className="t-sobrancelha text-texto-acento">{sobrancelha}</p>}
         <h1 className="t-h1 max-w-[860px]">{titulo}</h1>
         {lead && <p className="t-corpo-g max-w-[620px] text-texto-suave">{lead}</p>}
+        {/* Botões de largura inteira no celular: alvo grande para o polegar */}
+        {acoes && (
+          <div className="mt-2 flex w-full flex-col gap-3 *:w-full sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:*:w-auto">
+            {acoes}
+          </div>
+        )}
       </div>
     </section>
   );

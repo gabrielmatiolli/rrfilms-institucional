@@ -6,22 +6,43 @@ import { useActionState, useEffect, useRef, useState, startTransition } from "re
 import { Botao } from "@/components/ui/Botao";
 import { AreaDeTexto, Campo, Checkbox, Selecao } from "@/components/ui/Formulario";
 import { IconeCheck } from "@/components/ui/Icone";
+import {
+  DESTINOS_DA_PELICULA,
+  FAIXAS_DE_METRAGEM,
+  INTERESSES,
+  SEGMENTOS,
+} from "@/content/formulario";
 import { enviarPedido, type EstadoDoPedido } from "@/lib/pedidos/acoes";
 import { registrarPedidoDeOrcamento } from "@/lib/conversao";
 
 /**
  * Os dois formulários de orçamento do site — /contato e /para-empresas.
  *
- * Envia pela Server Action `enviarPedido` e só dispara a conversão (GTM, GA4,
- * Google Ads e Meta) quando o servidor confirma que o pedido foi salvo. Clique
- * em "Enviar" com campo errado não conta.
+ * Campos da revisão de copy de 28/10/2026. Em /contato: nome, WhatsApp,
+ * e-mail (opcional), cidade, "para onde é a película?", "o que você procura?" e
+ * o texto livre. Em /para-empresas: nome, empresa, segmento, cidade, WhatsApp,
+ * e-mail, metragem e mensagem.
+ *
+ * A pré-seleção vem por prop, não de `useSearchParams`: quem lê a URL é a
+ * página (Server Component), e assim o campo já chega escolhido no HTML — sem
+ * um quadro de formulário vazio antes da hidratação.
+ *
+ * Envia pela Server Action `enviarPedido` e só dispara a conversão (GTM) quando
+ * o servidor confirma que o pedido foi salvo. Clique em "Enviar" com campo
+ * errado não conta.
  */
 
 const estadoInicial: EstadoDoPedido = { situacao: "inicial" };
 
 type Props =
-  | { origem: "contato"; tiposDeImovel: readonly string[] }
-  | { origem: "empresas"; faixasDeMetragem: readonly string[] };
+  | {
+      origem: "contato";
+      /** Vem de `?tipo=empresa`. */
+      destinoInicial?: string;
+      /** Vem de `?interesse=…`, posto pelas páginas de produto. */
+      interesseInicial?: string;
+    }
+  | { origem: "empresas" };
 
 export function FormularioDeOrcamento(props: Props) {
   const [estado, acao, enviando] = useActionState(enviarPedido, estadoInicial);
@@ -38,7 +59,10 @@ export function FormularioDeOrcamento(props: Props) {
   useEffect(() => {
     if (estado.situacao !== "enviado" || conversaoDisparada.current === estado.id) return;
     conversaoDisparada.current = estado.id;
-    registrarPedidoDeOrcamento(props.origem);
+    registrarPedidoDeOrcamento(props.origem, {
+      publico: estado.publico,
+      interesse: estado.interesse,
+    });
   }, [estado, props.origem]);
 
   if (estado.situacao === "enviado") {
@@ -50,8 +74,8 @@ export function FormularioDeOrcamento(props: Props) {
         <h3 className="t-h4">Pedido recebido</h3>
         <p className="t-corpo text-texto-suave">
           {props.origem === "empresas"
-            ? "O comercial responde em até 1 dia útil com a simulação."
-            : "A gente responde em até 1 dia útil para combinar a medição."}
+            ? "O comercial responde pelo WhatsApp em horário comercial para agendar a visita técnica."
+            : "A gente responde pelo WhatsApp em horário comercial para combinar a medição."}
         </p>
       </div>
     );
@@ -59,7 +83,7 @@ export function FormularioDeOrcamento(props: Props) {
 
   return (
     <form
-      className={props.origem === "contato" ? "flex flex-col gap-6" : "flex flex-col gap-5"}
+      className="flex flex-col gap-5"
       // Envio por onSubmit, e não por action={…}: com action o React limpa o
       // formulário a cada envio, e quem errou um campo perderia tudo que digitou.
       onSubmit={(evento) => {
@@ -68,12 +92,22 @@ export function FormularioDeOrcamento(props: Props) {
         startTransition(() => acao(dados));
       }}
     >
-      <input type="hidden" name="origem" value={props.origem === "contato" ? "CONTATO" : "EMPRESAS"} />
+      <input
+        type="hidden"
+        name="origem"
+        value={props.origem === "contato" ? "CONTATO" : "EMPRESAS"}
+      />
       <input type="hidden" name="aberto_em" value={abertoEm} />
       {/* Campo-isca: fora da tela e fora do Tab. Gente não vê; robô preenche. */}
       <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
         <label htmlFor={`site-${props.origem}`}>Não preencha este campo</label>
-        <input id={`site-${props.origem}`} name="site" type="text" tabIndex={-1} autoComplete="off" />
+        <input
+          id={`site-${props.origem}`}
+          name="site"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+        />
       </div>
 
       {props.origem === "contato" ? (
@@ -100,18 +134,44 @@ export function FormularioDeOrcamento(props: Props) {
             />
           </div>
 
-          <Campo
-            id="email"
-            name="email"
-            rotulo="E-mail"
-            type="email"
-            placeholder="voce@email.com.br"
-            ajuda="Usamos só para retornar o orçamento."
-            autoComplete="email"
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo
+              id="email"
+              name="email"
+              rotulo="E-mail"
+              type="email"
+              placeholder="voce@email.com.br"
+              ajuda="Opcional. Usamos só para retornar o orçamento."
+              autoComplete="email"
+            />
+            <Campo
+              id="cidade"
+              name="cidade"
+              rotulo="Cidade"
+              placeholder="Itatiba"
+              autoComplete="address-level2"
+              maxLength={80}
+              required
+            />
+          </div>
+
+          <Selecao
+            id="destino-da-pelicula"
+            name="publico"
+            rotulo="Para onde é a película?"
+            opcoes={DESTINOS_DA_PELICULA}
+            defaultValue={props.destinoInicial ?? ""}
             required
           />
 
-          <Selecao id="tipo-de-imovel" name="detalhe" rotulo="Tipo de imóvel" opcoes={props.tiposDeImovel} />
+          <Selecao
+            id="interesse"
+            name="interesse"
+            rotulo="O que você procura?"
+            ajuda="Se não souber, a gente indica na visita."
+            opcoes={INTERESSES}
+            defaultValue={props.interesseInicial ?? ""}
+          />
 
           <AreaDeTexto
             id="sobre-o-vidro"
@@ -119,59 +179,101 @@ export function FormularioDeOrcamento(props: Props) {
             rotulo="Conte do seu vidro"
             rows={5}
             maxLength={3000}
-            placeholder="Quantas janelas, para onde estão viradas, qual o problema — calor, claridade, privacidade ou segurança."
+            placeholder="Ex.: porta de correr da sala, virada para o oeste, bate sol a tarde toda."
             ajuda="Quanto mais detalhe, mais preciso o orçamento."
           />
 
           <Checkbox
             id="consentimento"
             name="aceita_whatsapp"
-            rotulo="Aceito receber o orçamento por WhatsApp"
+            rotulo="Aceito receber o orçamento pelo WhatsApp."
             defaultChecked
           />
         </>
       ) : (
         <>
-          <Campo
-            id="empresa"
-            name="nome"
-            rotulo="Empresa"
-            placeholder="Razão social"
-            autoComplete="organization"
-            maxLength={160}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo
+              id="nome-corporativo"
+              name="nome"
+              rotulo="Nome"
+              placeholder="Quem fala com a gente"
+              autoComplete="name"
+              maxLength={120}
+              required
+            />
+            <Campo
+              id="empresa"
+              name="empresa"
+              rotulo="Empresa"
+              placeholder="Razão social"
+              autoComplete="organization"
+              maxLength={160}
+              required
+            />
+          </div>
+
+          <Selecao
+            id="segmento"
+            name="publico"
+            rotulo="Segmento"
+            opcoes={SEGMENTOS}
             required
           />
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo
+              id="cidade-corporativa"
+              name="cidade"
+              rotulo="Cidade"
+              placeholder="Itatiba"
+              autoComplete="address-level2"
+              maxLength={80}
+              required
+            />
+            <Campo
+              id="whatsapp-corporativo"
+              name="whatsapp"
+              rotulo="WhatsApp"
+              type="tel"
+              placeholder="(11) 90000-0000"
+              autoComplete="tel"
+              inputMode="tel"
+              required
+            />
+          </div>
+
           <Campo
             id="email-corporativo"
             name="email"
-            rotulo="E-mail corporativo"
+            rotulo="E-mail"
             type="email"
             placeholder="voce@empresa.com.br"
-            ajuda="Usamos só para retornar o orçamento."
+            ajuda="Opcional. Usamos só para retornar a proposta."
             autoComplete="email"
-            required
           />
-          <Campo
-            id="whatsapp-corporativo"
-            name="whatsapp"
-            rotulo="WhatsApp"
-            type="tel"
-            placeholder="(11) 90000-0000"
-            autoComplete="tel"
-            inputMode="tel"
-            required
-          />
+
           <Selecao
             id="metragem"
             name="detalhe"
             rotulo="Metragem aproximada de vidro"
-            ajuda="Se não souber, a gente mede na visita."
-            opcoes={props.faixasDeMetragem}
+            ajuda="Opcional. Se não souber, a gente mede na visita."
+            opcoes={FAIXAS_DE_METRAGEM}
           />
+
+          <AreaDeTexto
+            id="mensagem-corporativa"
+            name="mensagem"
+            rotulo="Mensagem"
+            rows={4}
+            maxLength={3000}
+            placeholder="Conte o tipo de ambiente, quantos vidros e o que precisa resolver."
+          />
+
           <Checkbox
             id="consentimento-corporativo"
             name="aceita_whatsapp"
-            rotulo="Aceito receber o orçamento por WhatsApp"
+            rotulo="Aceito receber o orçamento pelo WhatsApp."
             defaultChecked
           />
         </>
@@ -199,8 +301,8 @@ export function FormularioDeOrcamento(props: Props) {
         {enviando
           ? "Enviando…"
           : props.origem === "contato"
-            ? "Enviar e receber orçamento"
-            : "Solicitar simulação"}
+            ? "Enviar e agendar medição"
+            : "Solicitar visita técnica"}
       </Botao>
     </form>
   );

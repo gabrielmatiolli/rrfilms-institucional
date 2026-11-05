@@ -21,7 +21,7 @@ const STATUS: { valor: StatusDoPedido; rotulo: string; tom: "atencao" | "neutro"
 ];
 
 const ORIGEM = { CONTATO: "Contato", EMPRESAS: "Para empresas" } as const;
-const DETALHE = { CONTATO: "Imóvel", EMPRESAS: "Metragem" } as const;
+const PUBLICO = { CONTATO: "Para onde é a película", EMPRESAS: "Segmento" } as const;
 
 /** Quantos pedidos a lista mostra por vez — os mais recentes primeiro. */
 const LIMITE = 100;
@@ -105,8 +105,11 @@ export default async function PedidosAdmin({
                       {!pedido.emailEnviado && <Selo tom="neutro">Sem aviso por e-mail</Selo>}
                     </div>
                     <p className="font-[family-name:var(--tipo-familia-display)] text-[17px] font-bold leading-snug text-texto-forte">
-                      {pedido.nome}
+                      {pedido.empresa ?? pedido.nome}
                     </p>
+                    {pedido.empresa && (
+                      <p className="text-[13px] text-texto-corpo">{pedido.nome}</p>
+                    )}
                     <p className="text-[12px] text-texto-suave">
                       {tempoRelativo(pedido.criadoEm)} · {dataEHora(pedido.criadoEm)}
                     </p>
@@ -121,18 +124,42 @@ export default async function PedidosAdmin({
                     >
                       WhatsApp {formatarTelefone(pedido.whatsapp)}
                     </a>
-                    <a
-                      href={`mailto:${pedido.email}`}
-                      className="inline-flex min-h-[44px] items-center rounded-pill border border-borda-media/40 px-4 text-[13px] font-semibold text-texto-forte hover:border-texto-forte"
-                    >
-                      {pedido.email}
-                    </a>
+                    {pedido.email && (
+                      <a
+                        href={`mailto:${pedido.email}`}
+                        className="inline-flex min-h-[44px] items-center rounded-pill border border-borda-media/40 px-4 text-[13px] font-semibold text-texto-forte hover:border-texto-forte"
+                      >
+                        {pedido.email}
+                      </a>
+                    )}
                   </div>
                 </div>
 
                 <dl className="grid gap-x-6 gap-y-2 text-[13px] sm:grid-cols-[auto_1fr]">
-                  <dt className="text-texto-suave">{DETALHE[pedido.origem]}</dt>
-                  <dd className="text-texto-corpo">{pedido.detalhe ?? "Não informado"}</dd>
+                  {pedido.cidade && (
+                    <>
+                      <dt className="text-texto-suave">Cidade</dt>
+                      <dd className="text-texto-corpo">{pedido.cidade}</dd>
+                    </>
+                  )}
+                  {pedido.publico && (
+                    <>
+                      <dt className="text-texto-suave">{PUBLICO[pedido.origem]}</dt>
+                      <dd className="text-texto-corpo">{pedido.publico}</dd>
+                    </>
+                  )}
+                  {pedido.interesse && (
+                    <>
+                      <dt className="text-texto-suave">O que procura</dt>
+                      <dd className="text-texto-corpo">{pedido.interesse}</dd>
+                    </>
+                  )}
+                  {pedido.detalhe && (
+                    <>
+                      <dt className="text-texto-suave">Metragem</dt>
+                      <dd className="text-texto-corpo">{pedido.detalhe}</dd>
+                    </>
+                  )}
                   <dt className="text-texto-suave">Orçamento por WhatsApp</dt>
                   <dd className="text-texto-corpo">{pedido.aceitaWhatsapp ? "Aceita" : "Não aceita"}</dd>
                   {pedido.mensagem && (
@@ -171,7 +198,7 @@ export default async function PedidosAdmin({
                   <BotaoDeExcluir
                     acao={excluirPedido}
                     id={pedido.id}
-                    confirmacao={`Excluir o pedido de "${pedido.nome}"? Os dados somem de vez — use quando o cliente pedir.`}
+                    confirmacao={`Excluir o pedido de "${pedido.empresa ?? pedido.nome}"? Os dados somem de vez — use quando o cliente pedir.`}
                   />
                 </div>
               </li>

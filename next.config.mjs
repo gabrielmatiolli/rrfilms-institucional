@@ -1,3 +1,40 @@
+/**
+ * Redirecionamentos 301 da reorganização de URLs (revisão de copy de
+ * 28/10/2026). As quatro linhas de película passaram a viver em /servicos/… com
+ * nome por extenso, e o card "Proteção UV" virou uma seção da Nanocerâmica.
+ *
+ * `statusCode: 301` em vez de `permanent: true` (que devolve 308) porque o
+ * documento pede 301 nominalmente, e são páginas de conteúdo — só GET, então a
+ * troca de método que o 308 evita não é um risco aqui.
+ *
+ * Redirecionamento é checado antes do sistema de arquivos: a página antiga em
+ * /produtos/nanoceramica-ultra-hd foi removida junto, para não ficar código
+ * morto que nenhuma URL alcança.
+ */
+const redirecionamentos = [
+  {
+    source: "/produtos/nanoceramica-ultra-hd",
+    destination: "/servicos/pelicula-nanoceramica",
+  },
+  {
+    source: "/servicos/seguranca-e-anti-vandalismo",
+    destination: "/servicos/pelicula-de-seguranca-antiestilhaco",
+  },
+  {
+    source: "/servicos/espelhada-e-refletiva",
+    destination: "/servicos/pelicula-refletiva-privacidade",
+  },
+  {
+    source: "/servicos/privacidade-e-jateado",
+    destination: "/servicos/vinil-jateado-decorativo",
+  },
+  // O card "Proteção UV" saiu da grade e virou seção da Nanocerâmica.
+  {
+    source: "/servicos/protecao-uv",
+    destination: "/servicos/pelicula-nanoceramica#protecao-uv",
+  },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Permite acessar o servidor de dev pelo IP da rede local (ex: testar no
@@ -12,6 +49,9 @@ const nextConfig = {
       // até 8MB; a folga cobre o overhead do multipart.
       bodySizeLimit: "12mb",
     },
+  },
+  redirects() {
+    return redirecionamentos.map((regra) => ({ ...regra, statusCode: 301 }));
   },
 };
 

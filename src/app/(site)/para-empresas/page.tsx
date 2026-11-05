@@ -1,155 +1,227 @@
 import type { Metadata } from "next";
 
-import {
-  CardDeServico,
-  Depoimento,
-  type ServicoDeCard,
-} from "@/components/cards/Cartoes";
+import { DadosEstruturados } from "@/components/conteudo/DadosEstruturados";
 import { FormularioDeOrcamento } from "@/components/formularios/FormularioDeOrcamento";
+import { BotaoDeWhatsapp } from "@/components/sections/BotaoDeWhatsapp";
 import { FaixaDeCta } from "@/components/sections/FaixaDeCta";
 import { Galeria } from "@/components/sections/Galeria";
 import { HeroDividido } from "@/components/sections/Heros";
-import { BotaoLink } from "@/components/ui/Botao";
-import { CardDeBeneficio, ChipDeVidroLink } from "@/components/ui/Elementos";
-import { Foto } from "@/components/ui/Foto";
+import { LinkDeArtigo } from "@/components/sections/LinkDeArtigo";
+import { BotaoExterno, BotaoLink } from "@/components/ui/Botao";
+import { LinkComSeta, Selo } from "@/components/ui/Elementos";
 import { CabecalhoDeSecao, Secao } from "@/components/ui/Secao";
+import { ARTIGOS } from "@/content/blog";
+import { DESDE } from "@/content/linhas";
 import { galeriaPorChave } from "@/lib/dados/galerias";
-import { fotos } from "@/content/fotos";
+import { esquemaDeTrilha } from "@/lib/schema";
+
+/**
+ * Para empresas — o hub corporativo.
+ *
+ * Reescrita pela revisão de copy de 28/10/2026. Saíram os números sem fonte
+ * (15–30% de economia, payback de 18 meses, 42% menos ofuscamento, 8 °C, o
+ * corte de 300 m², o "1 dia útil" de resposta), a foto repetida da galeria e a
+ * afirmação de atendimento à NBR 7199 — que depende de confirmação com o
+ * fabricante, aplicação por aplicação. O "Laudo emitida" foi embora com a
+ * faixa de números.
+ */
+
+/**
+ * O portfólio de obras da RR Film, enviado em 04/11/2026.
+ *
+ * Não é um PDF, como o documento de copy supunha: é a página "Instalações da
+ * semana" no Google Sites da marca. Por isso o botão diz "Ver portfólio de
+ * obras" e abre em outra aba, em vez de "Baixar portfólio (PDF)" — prometer
+ * download e abrir um site é o tipo de desencontro que a revisão veio corrigir.
+ *
+ * Os parâmetros `?pli=1&authuser=0` do link original foram removidos: são da
+ * sessão Google de quem copiou a URL e, em quem tem mais de uma conta logada,
+ * `authuser=0` manda o visitante para a conta errada.
+ */
+const PORTFOLIO =
+  "https://sites.google.com/view/rr-film-decor/instala%C3%A7%C3%B5es-da-semana";
 
 export const metadata: Metadata = {
-  title: "Para empresas",
+  title: { absolute: "Películas para empresas, clínicas e fachadas | RR Film" },
   description:
-    "Retrofit de fachada sem trocar um vidro: menos calor em torres envidraçadas, laudo assinado por engenheiro e contrato de manutenção.",
+    "Conforto térmico, privacidade e segurança para escritórios, clínicas e lojas, sem trocar o vidro. Solicite uma visita técnica.",
+  openGraph: {
+    title: "Películas para empresas, clínicas e fachadas | RR Film",
+    description:
+      "Diagnóstico no local, especificação técnica explicada e instalação com equipe própria.",
+    images: ["/fotos/emp-galeria-2.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Películas para empresas, clínicas e fachadas | RR Film",
+    description:
+      "Conforto, privacidade e segurança sem trocar um vidro. Solicite uma visita técnica.",
+  },
 };
 
-const economia = [
-  { valor: "15–30%", rotulo: "de queda no consumo de climatização" },
-  { valor: "18 meses", rotulo: "para o investimento se pagar na face oeste" },
-  { valor: "0", rotulo: "vidro trocado, 0 dia de obra parada" },
-  { valor: "Laudo", rotulo: "assinado por engenheiro responsável" },
-];
-
-const solucoes: ServicoDeCard[] = [
+/** Bloco 2 — as três frentes. */
+const frentes = [
   {
-    linha: "frescor",
-    tag: "Segurança",
-    titulo: "Eficiência energética de fachada",
-    descricao:
-      "Menos calor em torres envidraçadas. A gente calcula em quanto tempo o investimento se paga, face por face, antes de fechar.",
-    foto: fotos["emp-solucao-1"],
-    dados: [
-      { valor: "15–30%", rotulo: "de economia" },
-      { valor: "18 m", rotulo: "de payback" },
-    ],
-    href: "/contato",
+    icone: "termometro" as const,
+    titulo: "Conforto térmico e fachada",
+    texto:
+      "Menos calor para equipe e clientes, menos carga no ar-condicionado e fachada sem alteração.",
+    rotulo: "Nanocerâmica Ultra HD",
+    href: "/servicos/pelicula-nanoceramica#para-sua-empresa",
   },
   {
-    linha: "conforto",
-    tag: "Nanocerâmica Ultra HD",
-    titulo: "Conforto do posto de trabalho",
-    descricao:
-      "Ofuscamento em tela e calor localizado derrubam produtividade. Tratamos face a face, priorizando onde a equipe senta.",
-    foto: fotos["emp-solucao-2"],
-    dados: [
-      { valor: "42%", rotulo: "menos ofuscamento" },
-      { valor: "8 °C", rotulo: "a menos no pico" },
-    ],
-    href: "/produtos/nanoceramica-ultra-hd",
+    icone: "privacidade" as const,
+    titulo: "Privacidade",
+    texto:
+      "Salas de reunião, consultórios e recepções sem persiana fechada o dia todo.",
+    rotulo: "Refletiva e Jateado",
+    href: "/servicos/pelicula-refletiva-privacidade#para-sua-empresa",
   },
   {
-    linha: "luz",
-    tag: "Decorativa",
-    titulo: "Segurança e comunicação visual",
-    descricao:
-      "Filme anti-estilhaço conforme NBR 7199 e aplicação de jateado com recorte de marca em salas e divisórias.",
-    foto: fotos["emp-solucao-3"],
-    dados: [
-      { valor: "NBR", rotulo: "7199 atendida" },
-      { valor: "Laudo", rotulo: "emitida" },
-    ],
-    href: "/contato",
+    icone: "escudo" as const,
+    titulo: "Segurança",
+    texto: "Retenção de estilhaços em fachadas, vitrines e áreas de circulação.",
+    rotulo: "Segurança Antiestilhaço",
+    href: "/servicos/pelicula-de-seguranca-antiestilhaco#para-sua-empresa",
   },
 ];
 
-const diferenciais = [
+/** Bloco 3 — por segmento. As âncoras são linkadas pelo rodapé. */
+const segmentos = [
   {
-    icone: "certificado" as const,
-    titulo: "Laudo e nota fiscal",
-    descricao:
-      "Anotação de Responsabilidade Técnica emitida por engenheiro, com memorial de cálculo por face.",
+    ancora: undefined,
+    titulo: "Escritórios",
+    texto:
+      "Privacidade em salas de reunião, menos reflexo nos monitores e conforto térmico para a equipe.",
+    indicacao: "Refletiva, Jateado e Nanocerâmica",
   },
   {
-    icone: "equipe" as const,
+    ancora: "clinicas",
+    titulo: "Clínicas e consultórios",
+    texto:
+      "Privacidade elegante no atendimento e conforto para pacientes na sala de espera.",
+    indicacao: "Jateado e Nanocerâmica",
+  },
+  {
+    ancora: undefined,
+    titulo: "Comércio e vitrines",
+    texto:
+      "Produtos protegidos do desbotamento por UV, vitrine sem calor excessivo e mais segurança no vidro.",
+    indicacao: "Nanocerâmica e Segurança",
+  },
+  {
+    ancora: "arquitetos",
+    titulo: "Arquitetos e vidraçarias",
+    texto:
+      "Especificação técnica para o projeto, amostras e instalação alinhada ao cronograma da obra.",
+    indicacao: "Todas as linhas",
+  },
+];
+
+/** Bloco 4 — por que a RR Film. */
+const porQue = [
+  {
+    titulo: `Desde ${DESDE}`,
+    texto: "Quase 30 anos de experiência técnica em películas.",
+  },
+  {
+    titulo: "Especificação explicada",
+    texto: "Você recebe o porquê de cada película indicada, por vidro.",
+  },
+  {
     titulo: "Equipe própria",
-    descricao:
-      "Sem terceirização. Time treinado, uniformizado, com integração de segurança e ASO em dia.",
+    texto: "Instalação feita pela RR Film, sem terceirizar.",
   },
   {
-    icone: "relogio" as const,
-    titulo: "Obra fora do horário",
-    descricao:
-      "Aplicação noturna e em fim de semana sem custo adicional para áreas críticas.",
+    titulo: "Prova antes de fechar",
+    texto: "Medição de calor e UV no local.",
   },
   {
-    icone: "regua" as const,
-    titulo: "Contrato de manutenção",
-    descricao:
-      "Revisão anual, reposição de trecho danificado e SLA de atendimento definido em contrato.",
+    titulo: "Nota fiscal e garantia",
+    texto: "Emitimos nota fiscal e a garantia vai por escrito na proposta.",
   },
 ];
 
-const categorias = ["Todos", "Escritório", "Clínica", "Loja e fachada", "Divisória"];
-
-const faixasDeMetragem = [
-  "Até 100 m²",
-  "De 100 a 300 m²",
-  "De 300 a 1.000 m²",
-  "Acima de 1.000 m²",
-  "Não sei — preciso de medição",
+/** Bloco 5 — como funciona o atendimento. */
+const atendimento = [
+  { numero: "01", titulo: "Visita técnica", descricao: "E medição dos vidros." },
+  {
+    numero: "02",
+    titulo: "Proposta",
+    descricao: "Com especificação por ambiente.",
+  },
+  {
+    numero: "03",
+    titulo: "Instalação programada",
+    descricao: "Combinada para não parar a operação.",
+  },
+  { numero: "04", titulo: "Entrega", descricao: "Com garantia por escrito." },
 ];
+
+const trilha = [{ rotulo: "Início", href: "/" }, { rotulo: "Para empresas" }];
 
 export default async function ParaEmpresas() {
   const galeria = await galeriaPorChave("para-empresas");
 
   return (
     <>
+      <DadosEstruturados dados={esquemaDeTrilha(trilha)} />
+
+      {/* Bloco 1 — Hero */}
       <HeroDividido
-        trilha={[{ rotulo: "Início", href: "/" }, { rotulo: "Para empresas" }]}
-        titulo="Retrofit de fachada sem trocar um vidro"
-        lead="Película para prédios, lojas e indústria. Menos calor, fachada uniforme em todo o edifício e laudo com contrato de manutenção."
+        trilha={trilha}
+        titulo="Conforto, privacidade e segurança sem trocar um vidro"
+        lead="Películas para escritórios, clínicas, lojas e projetos de arquitetura. Diagnóstico no local, especificação técnica explicada e instalação com equipe própria."
         foto="empresas-hero"
         tom="frescor"
         acoes={
           <>
-            <BotaoLink href="#orcamento">Falar com o comercial</BotaoLink>
-            <BotaoLink href="/contato" tipo="vidro">
-              Baixar portfólio
-            </BotaoLink>
+            <BotaoLink href="#orcamento">Solicitar visita técnica</BotaoLink>
+            <BotaoDeWhatsapp codigo="WA-EMP" rotulo="Falar com o comercial" />
           </>
         }
       />
 
-      {/* Economia — faixa grafite */}
-      <section className="bg-fundo-inverso py-12">
-        <div className="conteudo grid grid-cols-2 gap-8 lg:grid-cols-4 lg:gap-10">
-          {economia.map((d) => (
-            <div key={d.rotulo} className="flex flex-col gap-[10px]">
-              <p className="t-h1 leading-[1.08] text-texto-inverso">{d.valor}</p>
-              <p className="t-corpo-p text-texto-inverso opacity-70">{d.rotulo}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
+      {/* Bloco 2 — Três frentes */}
       <Secao fundo="pagina" id="solucoes">
         <CabecalhoDeSecao
           sobrancelha="Soluções"
-          titulo="Três frentes que resolvem 90% das demandas corporativas"
-          lead="Da torre envidraçada ao ponto de rua. Cada frente tem especificação, prazo e forma de contratação própria."
+          titulo="Três frentes que resolvem a maior parte das demandas corporativas"
+          lead="Da torre envidraçada ao ponto de rua. Cada frente tem especificação própria, definida vidro por vidro na visita."
         />
-        <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {solucoes.map((servico) => (
-            <CardDeServico key={servico.titulo} servico={servico} />
+        <div className="mt-10 grid gap-6 md:grid-cols-3">
+          {frentes.map((frente) => (
+            <article
+              key={frente.titulo}
+              className="flex flex-col items-start gap-4 rounded-xl border border-vidro-borda bg-vidro-preenchimento p-7 vidro-02"
+            >
+              <Selo icone={frente.icone} />
+              <h3 className="t-h5">{frente.titulo}</h3>
+              <p className="t-corpo-p text-texto-suave">{frente.texto}</p>
+              <div className="mt-auto pt-2">
+                <LinkComSeta href={frente.href}>{frente.rotulo}</LinkComSeta>
+              </div>
+            </article>
+          ))}
+        </div>
+      </Secao>
+
+      {/* Bloco 3 — Por segmento */}
+      <Secao fundo="sutil" id="segmentos">
+        <CabecalhoDeSecao sobrancelha="Por segmento" titulo="Escritórios, clínicas e lojas" />
+        <div className="mt-10 grid gap-8 md:grid-cols-2 lg:gap-10">
+          {segmentos.map((segmento) => (
+            <div
+              key={segmento.titulo}
+              id={segmento.ancora}
+              className="flex scroll-mt-32 flex-col gap-2 border-t border-borda-media pt-5"
+            >
+              <h3 className="t-h5 text-texto-forte">{segmento.titulo}</h3>
+              <p className="t-corpo-p text-texto-suave">{segmento.texto}</p>
+              <p className="t-micro text-texto-suave">
+                Indicação: <span className="text-texto-corpo">{segmento.indicacao}</span>
+              </p>
+            </div>
           ))}
         </div>
       </Secao>
@@ -159,71 +231,89 @@ export default async function ParaEmpresas() {
           sobrancelha={galeria.sobrancelha}
           titulo={galeria.titulo}
           lead={galeria.lead}
-          fundo="sutil"
-          filtros={categorias.map((categoria, i) => (
-            <ChipDeVidroLink key={categoria} href="#projetos" ativo={i === 0}>
-              {categoria}
-            </ChipDeVidroLink>
-          ))}
           itens={galeria.itens}
         />
       )}
 
+      {/* Bloco 4 — Por que a RR Film */}
       <Secao fundo="pagina" id="diferenciais">
         <CabecalhoDeSecao
           sobrancelha="Por que a RR Film"
-          titulo="O que o setor de facilities cobra e quase ninguém entrega"
-          lead="Documentação, previsibilidade e uma equipe que já sabe entrar em prédio com controle de acesso."
+          titulo="Por que empresas escolhem a RR Film"
         />
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {diferenciais.map((item) => (
-            <CardDeBeneficio key={item.titulo} {...item} />
+        <dl className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {porQue.map((item) => (
+            <div key={item.titulo} className="flex flex-col gap-2">
+              <dt className="t-h5 text-texto-forte">{item.titulo}</dt>
+              <dd className="t-corpo-p text-texto-suave">{item.texto}</dd>
+            </div>
           ))}
-        </div>
+        </dl>
       </Secao>
 
-      {/* Caso */}
+      {/* Bloco 5 — Como funciona o atendimento */}
       <Secao fundo="pagina">
-        <div className="grid items-center gap-8 lg:grid-cols-2">
-          <Foto
-            slot="emp-caso"
-            alt="Escritório em Campinas com película aplicada"
-            className="aspect-[624/380]"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-          />
-          <Depoimento
-            fala={{
-              citacao:
-                "“Precisávamos atender à norma de fachada sem trocar o vidro do prédio inteiro. Eles apresentaram o laudo, aplicaram em dois fins de semana e não paramos o escritório um dia.”",
-              nome: "Rodrigo Sette",
-              contexto: "Escritório em Campinas · 3.200 m² aplicados",
-            }}
-          />
+        <CabecalhoDeSecao
+          sobrancelha="Como funciona"
+          titulo="Do diagnóstico à entrega"
+        />
+        <ol className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {atendimento.map((passo) => (
+            <li key={passo.numero} className="flex flex-col items-start gap-4">
+              <span className="flex size-11 items-center justify-center rounded-pill border border-vidro-borda bg-[rgba(249,169,125,0.18)] t-tag text-texto-forte">
+                {passo.numero}
+              </span>
+              <h3 className="t-corpo-destaque text-texto-forte">{passo.titulo}</h3>
+              <p className="t-corpo-p text-texto-suave">{passo.descricao}</p>
+            </li>
+          ))}
+        </ol>
+
+        {/* Bloco 6 — Portfólio */}
+        <div className="mt-10 flex flex-col items-start gap-3">
+          <BotaoExterno
+            href={PORTFOLIO}
+            target="_blank"
+            rel="noopener noreferrer"
+            tipo="fantasma"
+            tamanho="M"
+          >
+            Ver portfólio de obras
+          </BotaoExterno>
+          <p className="t-micro text-texto-suave">
+            Abre as instalações da semana, atualizadas pela equipe RR Film.
+          </p>
         </div>
       </Secao>
 
-      {/* Formulário corporativo */}
+      {/* Bloco 7 — Conteúdo */}
+      <Secao fundo="sutil" className="!py-12">
+        <LinkDeArtigo slug={ARTIGOS.payback.slug} titulo={ARTIGOS.payback.titulo} />
+      </Secao>
+
+      {/* Bloco 8 — Orçamento corporativo */}
       <Secao fundo="pagina" id="orcamento">
         <div className="grid gap-10 rounded-2xl border border-vidro-borda bg-vidro-preenchimento p-6 vidro-03 sm:gap-12 sm:p-14 lg:grid-cols-2 lg:gap-16">
           <div className="flex flex-col items-start gap-4">
             <p className="t-sobrancelha text-texto-acento">Orçamento corporativo</p>
-            <h2 className="t-h2">Mande a metragem, devolvemos a simulação</h2>
+            <h2 className="t-h2">Solicite uma visita técnica</h2>
             <p className="t-corpo text-texto-suave">
-              Para áreas acima de 300 m² a gente estuda cada face do prédio e
-              calcula o retorno antes da visita. O comercial responde em até 1 dia
-              útil.
+              Conte o tipo de empresa, a cidade e a metragem aproximada de vidro.
+              Retornamos para agendar a visita.
             </p>
           </div>
 
-          <FormularioDeOrcamento origem="empresas" faixasDeMetragem={faixasDeMetragem} />
+          <FormularioDeOrcamento origem="empresas" />
         </div>
       </Secao>
 
+      {/* Bloco 9 — Chamada final */}
       <FaixaDeCta
-        titulo="Quanto custa manter esse prédio quente?"
-        lead="Mande a metragem e a orientação das faces. Devolvemos a simulação de economia antes da visita."
-        rotuloPrimario="Falar com o comercial"
-        mensagem="Olá! Quero falar com o comercial sobre película para empresa."
+        titulo="Quanto calor a sua fachada deixa entrar?"
+        lead="Na visita técnica, medimos o calor e o UV nos seus vidros e mostramos o que muda com cada película."
+        rotuloPrimario="Solicitar visita técnica"
+        hrefPrimario="/contato?tipo=empresa"
+        codigo="WA-EMP"
       />
     </>
   );

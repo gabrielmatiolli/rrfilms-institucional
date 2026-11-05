@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 
+import { DadosEstruturados } from "@/components/conteudo/DadosEstruturados";
 import { FormularioDeOrcamento } from "@/components/formularios/FormularioDeOrcamento";
 import { HeroSimples } from "@/components/sections/Heros";
-import { ListaDeFaq } from "@/components/ui/Faq";
+import { ListaDeFaq, type Duvida } from "@/components/ui/Faq";
 import {
   IconeEmail,
   IconePin,
@@ -10,45 +11,64 @@ import {
   IconeWhatsapp,
 } from "@/components/ui/Icone";
 import { CabecalhoDeSecao, Secao } from "@/components/ui/Secao";
+import { COBERTURA } from "@/content/linhas";
+import { destinoDaUrl, interesseDaUrl } from "@/content/formulario";
 import { contatoDoSite } from "@/lib/dados/configuracao";
+import { esquemaDeFaq, esquemaDeTrilha } from "@/lib/schema";
+
+/**
+ * Contato.
+ *
+ * O formulário ganhou cidade, "para onde é a película?" e "o que você procura?"
+ * (revisão de copy de 28/10/2026). A pré-seleção é lida aqui, no servidor:
+ * `?tipo=empresa` abre em "Empresa ou escritório" e `?interesse=…`, posto pelos
+ * CTAs das páginas de produto, já marca o que a pessoa foi ver.
+ *
+ * "Trabalhe conosco" saiu daqui e do rodapé: levava para este mesmo formulário,
+ * que não tem campo de currículo.
+ */
 
 export const metadata: Metadata = {
-  title: "Contato",
+  title: { absolute: "Agende sua medição gratuita | RR Film" },
   description:
-    "Conte do seu vidro e a gente responde em 1 dia útil. Medição e orçamento sem custo em Itatiba e região.",
+    "Fale com a RR Film pelo WhatsApp (11) 97374-2600 ou pelo formulário. Medição gratuita em Itatiba e região.",
+  openGraph: {
+    title: "Agende sua medição gratuita | RR Film",
+    description: `Medição e orçamento sem custo em ${COBERTURA}.`,
+  },
 };
 
-const tiposDeImovel = [
-  "Casa",
-  "Apartamento",
-  "Escritório",
-  "Loja",
-  "Clínica ou consultório",
-  "Indústria ou galpão",
-  "Outro",
-];
-
-
-const duvidas = [
+const duvidas: Duvida[] = [
   {
-    pergunta: "A visita e o orçamento têm custo?",
+    pergunta: "Quanto tempo leva para agendar a medição?",
     resposta:
-      "Não. Medição, especificação e proposta são gratuitas em Itatiba e região, com ou sem fechamento. Para obra acima de 300 m² atendemos todo o estado, também sem custo.",
+      "Em geral, conseguimos agendar na mesma semana do contato. Confirmamos o dia e o horário com você pelo WhatsApp.",
   },
   {
-    pergunta: "Vocês trabalham com qual prazo?",
-    resposta:
-      "Orçamento em até 1 dia útil após a visita. Aplicação residencial normalmente em até 7 dias; obra corporativa conforme cronograma acordado.",
+    pergunta: "A medição tem custo?",
+    resposta: `Não. A medição e o orçamento são gratuitos em ${COBERTURA}.`,
   },
   {
-    pergunta: "Aceitam nota fiscal e faturamento para PJ?",
-    resposta:
-      "Sim. Emitimos NF-e, aceitamos empenho e trabalhamos com prazo de pagamento para pessoa jurídica.",
+    pergunta: "Vocês emitem nota fiscal?",
+    resposta: "Sim, emitimos nota fiscal para pessoas físicas e empresas.",
+  },
+  {
+    pergunta: "Quais cidades vocês atendem?",
+    resposta: "Itatiba, Jundiaí, Vinhedo, Valinhos, Campinas e região.",
   },
 ];
 
-export default async function Contato() {
-  const contato = await contatoDoSite();
+const trilha = [{ rotulo: "Início", href: "/" }, { rotulo: "Contato" }];
+
+export default async function Contato({
+  searchParams,
+}: {
+  searchParams: Promise<{ tipo?: string; interesse?: string }>;
+}) {
+  const [{ tipo, interesse }, contato] = await Promise.all([
+    searchParams,
+    contatoDoSite(),
+  ]);
 
   const canais = [
     {
@@ -69,22 +89,25 @@ export default async function Contato() {
       Icone: IconeEmail,
       rotulo: "E-mail",
       valor: contato.email,
-      nota: "Para propostas corporativas e licitação.",
+      nota: "Para propostas corporativas e arquitetura.",
       href: `mailto:${contato.email}`,
     },
     {
       Icone: IconePin,
       rotulo: "Área de atendimento",
       valor: contato.cidade,
-      nota: "Campinas e Jundiaí sob consulta. Visita com hora marcada.",
+      nota: COBERTURA,
     },
   ];
 
   return (
     <>
+      <DadosEstruturados dados={[esquemaDeTrilha(trilha), esquemaDeFaq(duvidas)]} />
+
       <HeroSimples
-        trilha={[{ rotulo: "Início", href: "/" }, { rotulo: "Contato" }]}
-        titulo="Conte do seu vidro. A gente responde em 1 dia útil."
+        trilha={trilha}
+        titulo="Agende sua medição gratuita"
+        lead="Conte um pouco sobre o seu vidro. A gente responde pelo WhatsApp em horário comercial, de segunda a sexta, das 8h às 18h."
         foto="casas-galeria-3"
         alturaClasse="min-h-[320px] md:min-h-[400px]"
       />
@@ -129,11 +152,15 @@ export default async function Contato() {
 
           {/* Formulário */}
           <div className="rounded-2xl border border-vidro-borda bg-vidro-preenchimento p-6 vidro-02 sm:p-12 lg:col-start-1 lg:row-span-2 lg:row-start-1">
-            <p className="t-sobrancelha text-texto-acento">Orçamento sem custo</p>
+            <p className="t-sobrancelha text-texto-acento">Medição sem custo</p>
             <h2 className="mt-3 t-h4">Formulário de orçamento</h2>
 
             <div className="mt-8">
-              <FormularioDeOrcamento origem="contato" tiposDeImovel={tiposDeImovel} />
+              <FormularioDeOrcamento
+                origem="contato"
+                destinoInicial={destinoDaUrl(tipo)}
+                interesseInicial={interesseDaUrl(interesse)}
+              />
             </div>
           </div>
 

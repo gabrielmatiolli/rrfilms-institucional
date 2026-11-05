@@ -1,4 +1,5 @@
 import { IconeWhatsapp } from "@/components/ui/Icone";
+import { mensagemDeWhatsapp, rastreioDeWhatsapp } from "@/content/whatsapp";
 import { whatsappCom } from "@/lib/dados/configuracao";
 
 /**
@@ -10,12 +11,11 @@ import { whatsappCom } from "@/lib/dados/configuracao";
 export function FabWhatsapp({ whatsapp }: { whatsapp: string }) {
   return (
     <a
-      href={whatsappCom(
-        whatsapp,
-        "Olá! Vim pelo site e quero um orçamento de película para meu vidro.",
-      )}
+      href={whatsappCom(whatsapp, mensagemDeWhatsapp("WA-GERAL"))}
       target="_blank"
       rel="noopener noreferrer"
+      data-produto={rastreioDeWhatsapp("WA-GERAL").produto}
+      data-publico={rastreioDeWhatsapp("WA-GERAL").publico}
       className="fixed bottom-5 right-5 z-40 flex items-center gap-[10px] rounded-pill bg-frescor-500 py-4 pl-[18px] pr-[22px] text-escuro-900 elevacao-02 transition-colors hover:bg-[#b6d494] md:bottom-6 md:right-6"
     >
       <IconeWhatsapp tamanho={24} />
