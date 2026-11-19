@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 
 import { ehCaminhoDeImagem, PASTAS_DE_UPLOAD } from "@/lib/imagens";
+import { raizDeUploads } from "@/lib/uploads";
 
 const TIPOS_ACEITOS = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const TAMANHO_MAXIMO = 8 * 1024 * 1024;
@@ -63,11 +64,20 @@ export async function salvarImagem(arquivo: File, pasta: string): Promise<Result
     return { erro: "Não foi possível processar essa imagem." };
   }
 
-  const diretorio = path.join(process.cwd(), "public", "uploads", pasta);
-  await mkdir(diretorio, { recursive: true });
-
+  const diretorio = path.join(raizDeUploads(), pasta);
   const nome = `${randomUUID()}.webp`;
-  await writeFile(path.join(diretorio, nome), saida);
+
+  // A pasta de destino vem de UPLOADS_DIR e fica fora do app (ver
+  // src/lib/uploads.ts). Um caminho errado ou sem permissão de escrita no
+  // servidor tem de aparecer como recado no painel, não como erro 500 no meio
+  // do formulário — o detalhe fica no log do servidor.
+  try {
+    await mkdir(diretorio, { recursive: true });
+    await writeFile(path.join(diretorio, nome), saida);
+  } catch (erro) {
+    console.error("Falha ao gravar upload em", diretorio, erro);
+    return { erro: "Não foi possível gravar a imagem na pasta do servidor." };
+  }
 
   return { url: `/uploads/${pasta}/${nome}` };
 }

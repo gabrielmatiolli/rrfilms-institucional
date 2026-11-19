@@ -52,9 +52,15 @@ def arquivos_do_projeto() -> list[Path]:
         if any(parte in PASTAS_FORA for parte in relativo.parts):
             continue
         # As imagens enviadas pelo painel são conteúdo do servidor, não do
-        # projeto: subir as daqui levaria upload de teste para produção. Só a
-        # pasta vazia vai, para o primeiro upload ter onde cair.
+        # projeto: subir as daqui levaria upload de teste para produção. Hoje
+        # elas moram em UPLOADS_DIR (dados/uploads em dev, fora do app em
+        # produção — ver src/lib/uploads.ts); a public/uploads continua indo
+        # vazia porque a rota /uploads ainda lê de lá o que foi enviado antes.
         if relativo.parts[:2] == ("public", "uploads") and relativo.name != ".gitkeep":
+            continue
+        # A pasta de uploads do dev. Fica na raiz do projeto, e nada dela sobe:
+        # em produção o UPLOADS_DIR aponta para fora do app.
+        if relativo.parts[0] == "dados":
             continue
         # O cliente do Prisma é gerado no servidor pelo postinstall.
         if relativo.parts[:3] == ("src", "generated", "prisma"):

@@ -35,6 +35,7 @@ Variáveis de ambiente em `.env` — veja `.env.example`:
 | `JWT_SECRET` | Assina o cookie de sessão do painel (mínimo 32 caracteres) |
 | `ADMIN_SEED_*` | Conta de acesso criada pelo `db:seed`, se ainda não existir |
 | `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` / `HCAPTCHA_SECRET_KEY` | Captcha do login |
+| `UPLOADS_DIR` | Pasta onde o painel grava as imagens enviadas — fora do diretório do app |
 
 Dois arquivos de ambiente, com as mesmas chaves:
 
@@ -64,9 +65,10 @@ falhar de qualquer jeito: ele cria um banco temporário de sombra, e o usuário
 do banco em geral não tem permissão para isso.
 
 Cuidado com upload quando o dev aponta para o banco de produção: a imagem é
-gravada no `public/uploads` **da sua máquina**, mas o registro vai para o banco
-de produção — e o site no ar passa a apontar para um arquivo que não existe no
-servidor. Conteúdo com foto se cadastra no painel do site publicado.
+gravada na pasta de uploads **da sua máquina** (`dados/uploads`), mas o registro
+vai para o banco de produção — e o site no ar passa a apontar para um arquivo
+que não existe no servidor. Conteúdo com foto se cadastra no painel do site
+publicado.
 
 O seed é idempotente e conservador: reaplica o conteúdo inicial sem sobrescrever
 o que já foi editado no painel. Ele nunca apaga o corpo de um artigo já escrito,
@@ -178,11 +180,31 @@ publica post do telefone.
 
 ### Imagens enviadas pelo painel
 
-Vão para `public/uploads/<pasta>/`, fora do controle de versão. Todo arquivo é
-reprocessado pelo `sharp` e regravado como WebP: além de comprimir, isso garante
-que só sobrevive o que o decodificador entende como imagem — um arquivo com
-payload disfarçado de `.jpg` não chega ao disco. O `type` que o navegador manda
-é tratado como dica, não como prova.
+Vão para a pasta de `UPLOADS_DIR`, em `<pasta>/<uuid>.webp`, fora do controle de
+versão: `dados/uploads` em dev e `/home/<conta>/dados/uploads` em produção. Todo
+arquivo é reprocessado pelo `sharp` e regravado como WebP: além de comprimir,
+isso garante que só sobrevive o que o decodificador entende como imagem — um
+arquivo com payload disfarçado de `.jpg` não chega ao disco. O `type` que o
+navegador manda é tratado como dica, não como prova.
+
+**Duas decisões que custaram um bug para aprender** (18/11/2026: capa trocada no
+painel não aparecia no site, 404 em `/uploads/…`):
+
+- **A pasta não é servida pela `public/`.** O Next lista a `public/` uma única
+  vez, quando o servidor sobe, e em produção só serve o que está nessa lista
+  (`publicFolderItems`, em `next/dist/server/lib/router-utils/filesystem.js`).
+  Em `next dev` ele confere o disco a cada pedido — por isso o arquivo novo
+  aparecia aqui e dava 404 no ar. Quem serve é
+  `src/app/uploads/[...caminho]/route.ts`, que lê o disco na hora do pedido:
+  mesmo endereço, nada muda no banco. A rota manda `Cache-Control: immutable`
+  (o nome é um UUID sorteado em cada upload), então o CDN da Hostinger guarda o
+  arquivo na borda como já faz com o acervo de `/fotos`.
+- **A pasta fica fora do diretório do app.** O deploy substitui a pasta do
+  projeto; foto de cliente não pode morar em algo que o próximo ZIP sobrescreve.
+  Em dev ela fica fora da `public/` pelo mesmo motivo de método: a imagem sai
+  pela mesma rota nos dois ambientes, e um erro nela aparece antes de ir ao ar.
+  A rota ainda procura em `public/uploads` o que foi enviado antes dessa
+  mudança.
 
 ## Mensuração (Google Tag Manager)
 
@@ -340,9 +362,18 @@ Smart" e do card "Proteção UV", cabeçalhos das galerias, as três galerias no
 em fotos já curadas nem em corpo de artigo; sobre depoimentos ele só relata o
 que está publicado, porque a autorização é decisão da RR Film.
 
-Reaponte também os acionadores do GTM — ver "Mensuração". As imagens enviadas pelo painel ficam em `public/uploads` no
-servidor e **não** vão no ZIP — o pacote leva só a pasta vazia, para o primeiro
-upload ter onde cair.
+Reaponte também os acionadores do GTM — ver "Mensuração".
+
+As imagens enviadas pelo painel **não** vão no ZIP, em nenhum sentido: elas são
+conteúdo do servidor. Confira a `UPLOADS_DIR` do `.env` antes de empacotar — ela
+tem de ser um caminho absoluto fora do diretório do app, na home da conta
+(o Gerenciador de Arquivos da hPanel mostra o prefixo: é a pasta que contém
+`domains/` e `public_html`). Se a pasta não existir, o primeiro upload a cria;
+se o caminho estiver errado ou sem permissão, o painel recusa o envio com recado
+em vez de falhar em silêncio. O que o painel enviou antes desta mudança continua
+em `public/uploads` no servidor e continua no ar — a rota procura nas duas
+pastas. Para unificar, mova o conteúdo de `public/uploads/` para a pasta nova
+pelo Gerenciador de Arquivos.
 
 O que foi ajustado para esse deploy:
 
