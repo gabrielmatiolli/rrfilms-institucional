@@ -43,6 +43,12 @@ const nextConfig = {
   // localhost, e a página carrega sem nenhum JS funcionando.
   allowedDevOrigins: ["192.168.0.*"],
   experimental: {
+    // Política de atualização que o `next upgrade` e o aviso do `next dev`
+    // seguem: só o que fecha advisory de segurança, nunca "latest" nem
+    // experimental. Hoje é o padrão do Next 16.4, e está escrito aqui para o
+    // projeto não mudar de política sozinho se o padrão mudar — e para ficar
+    // registrado que a subida 16.4.3 → 16.4.6 (19/11/2026) veio de advisory.
+    agentUpgrade: "security",
     serverActions: {
       // O padrão do Next é 1MB por request — pequeno demais para o envio de
       // imagens do painel, que sobe por Server Action. salvarImagem() aceita
